@@ -52,6 +52,16 @@ Can be composed to represent a stack trace
 */
 
 with builtins;
+# with rec {
+#   foldr = op: nul: list:
+#     let
+#       len = length list;
+#       fold' = n:
+#         if n == len
+#         then nul
+#         else op (elemAt list n) (fold' (n + 1));
+#     in fold' 0;
+# };
 rec {
   ##########
   # slices #
@@ -142,22 +152,20 @@ rec {
   # combinators #
   ###############
 
-  # (*>) :: Parser a -> Parser b -> Parser b
+  /*
+  apply f to the value if successful (nom map)
+  */
+  bind = parse: f: slice:
+    let result = parse slice; in
+    if failed result
+      then failWith result "map" slice "not successful"
+    else
+      (f (elemAt result 1)) (elemAt result 0);
+
   /*
   skipThen 
     runs the first parser
     if it succeeds run the second parser
   */
-  skipThen = parseA: parseB: slice:
-    let resA = parseA slice; in
-    if failed resA
-      then failWith resA "skipThen" slice "A fail"
-    else
-    
-    let resB = parseB (elemAt resA 0); in
-    if failed resB
-      then failWith resB "skipThen" slice "B fail"
-    else
-
-    resB;
+  skipThen = parseA: parseB: bind parseA (_: parseB);
 }
