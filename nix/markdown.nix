@@ -53,8 +53,11 @@ Can be composed to represent a stack trace
 
 with builtins;
 rec {
-  # slice helpers
-  /*
+  ##########
+  # slices #
+  ##########
+  
+ /*
   a slice is an array containing [ offset length text ]
   */
   makeSlice = text: [ 0 (stringLength text) text ];
@@ -65,9 +68,29 @@ rec {
   dumpSlice = slice: substring (elemAt slice 0) (elemAt slice 1) (elemAt slice 2);
 
   /*
+  return the first n characters of a slice in a string
+  */
+  peekN = n: slice:
+    let
+      offset = elemAt slice 0;
+    in
+      substring offset n (elemAt slice 2);
+
+  /*
+  return a slice removing the first n characters
+  */
+  dropN = n: slice:
+    [ ((elemAt slice 0) + n) ((elemAt slice 1) - n) (elemAt slice 2) ];
+ 
+  /*
   format offset and length for errors
   */
   loc = slice: "[${toString (elemAt slice 0)}:${toString (elemAt slice 1)}]";
+
+  ###########
+  # failure #
+  ###########
+
 
   /*
   construct a contextual error
@@ -94,22 +117,10 @@ rec {
         err null
     else
       elemAt result 1;
-
-  /*
-  return the first n characters of a slice in a string
-  */
-  peekN = n: slice:
-    let
-      offset = elemAt slice 0;
-    in
-      substring offset n (elemAt slice 2);
-
-  # slice operators
-  /*
-  return a slice removing the first n characters
-  */
-  dropN = n: slice:
-    [ ((elemAt slice 0) + n) ((elemAt slice 1) - n) (elemAt slice 2) ];
+  
+  ###########
+  # parsers #
+  ###########
 
   /*
   consume the symbols if matched
@@ -127,7 +138,9 @@ rec {
 
     [ (dropN tokenLength slice) k ];
 
-  # combinators
+  ###############
+  # combinators #
+  ###############
 
   # (*>) :: Parser a -> Parser b -> Parser b
   /*
@@ -147,12 +160,4 @@ rec {
     else
 
     resB;
-
-  # (<*) :: Parser a -> Parser b -> Parser a
-  # (<$) :: a -> Parser b -> Parser a
-  # a *> b = run a then output b
-  # a <* b = run a then b then output a
-  # v <$ f = run a then apply f to the value
-
-
 }

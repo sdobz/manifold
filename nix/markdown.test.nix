@@ -8,6 +8,10 @@ let
   emipsSlice = [ 3  8 "lorem ipsum" ];
 in
   runTests {
+    ##########
+    # slices #
+    ##########
+
     testMakeSlice = {
       expr = md.makeSlice "lorem ipsum";
       expected = loremSlice;
@@ -22,6 +26,25 @@ in
       expr = md.loc loremSlice;
       expected = "[0:11]";
     };
+
+    testPeekStart = {
+      expr = md.peekN 3 loremSlice;
+      expected = "lor";
+    };
+
+    testPeekMiddle = {
+      expr = md.peekN 2 emipsSlice;
+      expected = "em";
+    };
+
+    testDrop = {
+      expr = md.dropN 3 loremSlice;
+      expected = emipsSlice;
+    };
+
+    ###########
+    # failure #
+    ###########
 
     testFail = let 
       result = md.fail "parser" loremSlice "is borked";
@@ -47,20 +70,9 @@ in
       expected = true;
     };
 
-    testPeekStart = {
-      expr = md.peekN 3 loremSlice;
-      expected = "lor";
-    };
-
-    testPeekMiddle = {
-      expr = md.peekN 2 emipsSlice;
-      expected = "em";
-    };
-
-    testDrop = {
-      expr = md.dropN 3 loremSlice;
-      expected = emipsSlice;
-    };
+    ###########
+    # parsers #
+    ###########
 
     testTagMatch = {
       expr = md.tag "lor" loremSlice;
@@ -85,4 +97,8 @@ in
       expr = md.dump (parser loremSlice);
       expected = "ipsum";
     };
+
+    ###############
+    # combinators #
+    ###############
   }
