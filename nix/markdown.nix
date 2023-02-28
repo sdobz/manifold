@@ -28,7 +28,8 @@ Hasura writing a json parser in haskell
 https://hasura.io/blog/parser-combinators-walkthrough/
 
 
-
+Parsec style parser for markdown:
+https://github.com/tiqwab/md-parser
 
 type Parser symbol result = [symbol] -> [([symbol],result)]
 
@@ -66,14 +67,18 @@ same order as substring
 
 are ALL strings this? naw
 
-Parser symbol result = symbol -> {err} | [symbol, result]
+Parser symbol result = symbol -> Err | [value off len]
+Err = _ -> string
+Can be invoked with null to resolve
+
+Errs can stack up and be invoked into an array of error messages
 */
 
 with builtins;
 rec {
   # slice helpers
   /*
-  a slice is an array containing [ text offset length ]
+  a slice is an array containing [ val offset length ]
   */
   makeSlice = text: [ 0 (stringLength text) text ];
   
@@ -86,6 +91,26 @@ rec {
   format offset and length for errors
   */
   loc = slice: "[${toString (elemAt slice 0)}:${toString (elemAt slice 1)}]";
+
+  /*
+  fail constructs an error
+  */
+  fail = msg: _: msg;
+
+  /*
+  construct an anonymous error
+  */
+  failLoc = name: slice: _: "${name}${loc slice}";
+
+  /*
+  construct a contextual error
+  */
+  failLocMsg = name: slice: msg: _: "${name}${loc slice} - ${msg}";
+
+  /*
+  failWith adds an err to the end of the err
+  */
+  failWith = err: newErr: _: "${err null}\n${newErr null}";
 
   /*
   return the first n characters of a slice in a string
@@ -112,11 +137,32 @@ rec {
              where n = length k
   */
   token = k: slice:
-    let
-      tokenLength = stringLength k;
-      doesMatch = (peekN tokenLength slice) == k;
-    in
-      if doesMatch
-        then [ (dropN tokenLength slice) k ]
-        else "token${loc slice}: expected ${k} got ${peekN tokenLength slice}";
+    let tokenLength = stringLength k; in
+    if tokenLength + (elemAt slice 0) > (elemAt slice 1)
+      then failLocMsg "token" slice "expected ${k} got overflow"
+    else
+
+    let doesMatch = (peekN tokenLength slice) == k; in
+    if !doesMatch
+      then failLocMsg  "token" slice "expected ${k} got ${peekN tokenLength slice}"
+    else 
+
+    [ (dropN tokenLength slice) k ];
+
+  # combinators
+
+  # (*>) :: Parser a -> Parser b -> Parser b
+  /*
+  andThen
+    runs the first parser
+  */
+
+
+  # (<*) :: Parser a -> Parser b -> Parser a
+  # (<$) :: a -> Parser b -> Parser a
+  # a *> b = run a then output b
+  # a <* b = run a then b then output a
+  # v <$ f = run a then apply f to the value
+
+
 }
