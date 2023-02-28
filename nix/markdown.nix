@@ -27,58 +27,35 @@ https://medium.com/@MrJamesFisher/nix-by-example-a0063a1a4c55 - demonstrates par
 Hasura writing a json parser in haskell
 https://hasura.io/blog/parser-combinators-walkthrough/
 
-
 Parsec style parser for markdown:
 https://github.com/tiqwab/md-parser
 
-type Parser symbol result = [symbol] -> [([symbol],result)]
+soft requirment:
+  - match rust `nom` so they can share combinators
 
-Parser takes symbols and returns a success list of remaining symbols, and the result of the parse
+parser = arguments -> slice -> result
 
-parsers can be composed
+result = [ slice value ] | [ slice null err ]
+elemAt result 0 = slice
+elemAt result 1 = value
+elemAt result 2 = err
 
-<|>
-<*>
-<@ "applies" operator
+slice = [ offset length text ]
+elemAt slice 0 == offset
+elemAt slice 1 == length
+elemAt slice 2 == text
 
-nix types:
-function
-list
-int
-
-what is a symbol?
-- it is a chunk of source text
-
-what if parsers enclose a source text? -- the markdown?
-
-Reduces string allocations perhaps - is that a problem?
-BUILD IT FIRST profile later
-
-What is simplest? MVP? Vert slice?
-Ok: if something goes wrong I want useful error messages
-
-I like the slice idea, it makes math simple
-[offset len text]
-elemAt slice 0 = offset
-elemAt slice 1 = len
-elemAt slice 2 = text
-
-same order as substring
-
-are ALL strings this? naw
-
-Parser symbol result = symbol -> Err | [value off len]
-Err = _ -> string
+err = _ -> string
 Can be invoked with null to resolve
+Can be composed to represent a stack trace
 
-Errs can stack up and be invoked into an array of error messages
 */
 
 with builtins;
 rec {
   # slice helpers
   /*
-  a slice is an array containing [ val offset length ]
+  a slice is an array containing [ offset length text ]
   */
   makeSlice = text: [ 0 (stringLength text) text ];
   
@@ -93,24 +70,29 @@ rec {
   loc = slice: "[${toString (elemAt slice 0)}:${toString (elemAt slice 1)}]";
 
   /*
-  fail constructs an error
-  */
-  fail = msg: _: msg;
-
-  /*
-  construct an anonymous error
-  */
-  failLoc = name: slice: _: "${name}${loc slice}";
-
-  /*
   construct a contextual error
   */
-  failLocMsg = name: slice: msg: _: "${name}${loc slice} - ${msg}";
+  fail = name: slice: msg: [ slice null (_: "${name}${loc slice} - ${msg}") ];
 
   /*
   failWith adds an err to the end of the err
   */
-  failWith = err: newErr: _: "${err null}\n${newErr null}";
+  # failWith = err: newErr: _: "${err null}\n${newErr null}";
+
+  /*
+  check if the err param is present
+  */
+  failed = result: length result == 3;
+
+  /*
+  dump the result if success or error if failure
+  */
+  dump = result:
+    if failed result
+      then let err = elemAt result 2; in
+        err null
+    else
+      elemAt result 1;
 
   /*
   return the first n characters of a slice in a string
@@ -129,22 +111,17 @@ rec {
     [ ((elemAt slice 0) + n) ((elemAt slice 1) - n) (elemAt slice 2) ];
 
   /*
-  return a parser that matches the 
-  token :: Eq [s] => [s] -> Parser s [s]
-
-  token k xs | k==take n xs = [ (drop n xs, k) ]
-           | otherwise = []
-             where n = length k
+  consume the symbols if matched
   */
-  token = k: slice:
+  tag = k: slice:
     let tokenLength = stringLength k; in
     if tokenLength + (elemAt slice 0) > (elemAt slice 1)
-      then failLocMsg "token" slice "expected ${k} got overflow"
+      then fail "tag" slice "expected ${k} got overflow"
     else
 
     let doesMatch = (peekN tokenLength slice) == k; in
     if !doesMatch
-      then failLocMsg  "token" slice "expected ${k} got ${peekN tokenLength slice}"
+      then fail "tag" slice "expected ${k} got ${peekN tokenLength slice}"
     else 
 
     [ (dropN tokenLength slice) k ];
@@ -153,10 +130,17 @@ rec {
 
   # (*>) :: Parser a -> Parser b -> Parser b
   /*
-  andThen
+  skipThen 
     runs the first parser
+    if it succeeds run the second parser
   */
+  skipThen = parseA: parseB: slice:
+    let res = parseA slice; in
+    if failed res
+      then slice
+    else
 
+    parseB slice;
 
   # (<*) :: Parser a -> Parser b -> Parser a
   # (<$) :: a -> Parser b -> Parser a

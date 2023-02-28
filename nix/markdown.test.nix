@@ -23,26 +23,28 @@ in
       expected = "[0:11]";
     };
 
-    testFail = {
-      expr = md.fail "oops" null;
-      expected = "oops";
-    };
-
-    testFailLoc = {
-      expr = md.failLoc "parser" loremSlice null;
-      expected = "parser[0:11]";
-    };
-
-    testFailLocMsg = {
-      expr = md.failLocMsg "parser" loremSlice "is borked" null;
+    testFail = let 
+      result = md.fail "parser" loremSlice "is borked";
+    in {
+      expr = md.dump result;
       expected = "parser[0:11] - is borked";
     };
 
-    testFailWith = let
-      err = md.fail "err 1";
-    in {
-      expr = md.failWith err (md.fail "err 2") null;
-      expected = "err 1\nerr 2";
+    # testFailWith = let
+    #   result = md.fail "parser" loremSlice "is borked";
+    # in {
+    #   expr = md.failWith err (md.fail "err 2") null;
+    #   expected = "err 1\nerr 2";
+    # };
+
+    testNotFailed = {
+      expr = md.failed [ loremSlice null ];
+      expected = false;
+    };
+
+    testFailed = {
+      expr = md.failed [ loremSlice null (_: "err") ];
+      expected = true;
     };
 
     testPeekStart = {
@@ -60,18 +62,31 @@ in
       expected = emipsSlice;
     };
 
-    testTokenMatch = {
-      expr = md.token "lor" loremSlice;
+    testTagMatch = {
+      expr = md.tag "lor" loremSlice;
       expected = [ emipsSlice "lor" ];
     };
 
-    testTokenOverflow = {
-      expr = md.token "lorem ipsum 123" loremSlice null;
-      expected = "token[0:11] - expected lorem ipsum 123 got overflow";
+    testTagOverflow = {
+      expr = md.dump (md.tag "lorem ipsum 123" loremSlice);
+      expected = "tag[0:11] - expected lorem ipsum 123 got overflow";
     };
 
-    testTokenMiss = {
-      expr = md.token "bad" loremSlice null;
-      expected = "token[0:11] - expected bad got lor";
+    testTagMiss = {
+      expr = md.dump (md.tag "bad" loremSlice);
+      expected = "tag[0:11] - expected bad got lor";
     };
+
+    # testSkipThenOk = let
+    #   lorem = md.tag "lorem ";
+    #   ipsum = md.tag "ipsum";
+    #   parser = md.skipThen lorem ipsum;
+    # in {
+    #   expr = parser loremSlice;
+    #   expected = "";
+    # };
   }
+
+# refactors:
+# - slice -> value
+# - dump -> handles slice or err
