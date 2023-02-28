@@ -30,12 +30,12 @@ in
       expected = "parser[0:11] - is borked";
     };
 
-    # testFailWith = let
-    #   result = md.fail "parser" loremSlice "is borked";
-    # in {
-    #   expr = md.failWith err (md.fail "err 2") null;
-    #   expected = "err 1\nerr 2";
-    # };
+    testFailWith = let
+      result = md.fail "p" loremSlice "1";
+    in {
+      expr = md.dump (md.failWith result "p" loremSlice "2");
+      expected = "p[0:11] - 1\np[0:11] - 2";
+    };
 
     testNotFailed = {
       expr = md.failed [ loremSlice null ];
@@ -77,16 +77,12 @@ in
       expected = "tag[0:11] - expected bad got lor";
     };
 
-    # testSkipThenOk = let
-    #   lorem = md.tag "lorem ";
-    #   ipsum = md.tag "ipsum";
-    #   parser = md.skipThen lorem ipsum;
-    # in {
-    #   expr = parser loremSlice;
-    #   expected = "";
-    # };
+    testSkipThenOk = let
+      lorem = md.tag "lorem ";
+      ipsum = md.tag "ipsum";
+      parser = md.skipThen lorem ipsum;
+    in {
+      expr = md.dump (parser loremSlice);
+      expected = "ipsum";
+    };
   }
-
-# refactors:
-# - slice -> value
-# - dump -> handles slice or err

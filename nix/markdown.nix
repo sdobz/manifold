@@ -77,7 +77,8 @@ rec {
   /*
   failWith adds an err to the end of the err
   */
-  # failWith = err: newErr: _: "${err null}\n${newErr null}";
+  failWith = result: name: slice: msg:
+    [ slice null (_: "${(elemAt result 2) null}\n${name}${loc slice} - ${msg}") ];
 
   /*
   check if the err param is present
@@ -115,14 +116,14 @@ rec {
   */
   tag = k: slice:
     let tokenLength = stringLength k; in
-    if tokenLength + (elemAt slice 0) > (elemAt slice 1)
+    if tokenLength > (elemAt slice 1)
       then fail "tag" slice "expected ${k} got overflow"
     else
 
     let doesMatch = (peekN tokenLength slice) == k; in
     if !doesMatch
       then fail "tag" slice "expected ${k} got ${peekN tokenLength slice}"
-    else 
+    else
 
     [ (dropN tokenLength slice) k ];
 
@@ -135,12 +136,17 @@ rec {
     if it succeeds run the second parser
   */
   skipThen = parseA: parseB: slice:
-    let res = parseA slice; in
-    if failed res
-      then slice
+    let resA = parseA slice; in
+    if failed resA
+      then failWith resA "skipThen" slice "A fail"
+    else
+    
+    let resB = parseB (elemAt resA 0); in
+    if failed resB
+      then failWith resB "skipThen" slice "B fail"
     else
 
-    parseB slice;
+    resB;
 
   # (<*) :: Parser a -> Parser b -> Parser a
   # (<$) :: a -> Parser b -> Parser a
