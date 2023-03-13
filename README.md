@@ -6,6 +6,13 @@ Literate programming is the upside - down inverse of what a computer expects. It
 
 * [tangledown.py](https://github.com/rebcabin/tangledown)
 
+Building a parser (combinator)
+* [nix parsec](https://github.com/kanwren/nix-parsec/blob/master/parsec.nix)
+* [nom-rs](https://github.com/rust-bakery/nom)
+* [hasura parser-combinator](https://hasura.io/blog/parser-combinators-walkthrough/)
+* [functional parsers](http://cmsc-16100.cs.uchicago.edu/2017/Lectures/17/parsers.pdf)
+
+
 ## Goal
 
 1. Source markdown files are tangled into an executable form
@@ -52,6 +59,12 @@ Implement a subset in nix, enough to establish the build environment
 This can compromize full syntax as long as it still achieves identical evaluation
 
 It should fit into a single file less than 500 lines
+
+## Testing
+
+```
+nix eval --impure --expr 'import ./nix/markdown.test.nix {}'
+```
 
 # Terms
 

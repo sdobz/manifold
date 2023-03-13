@@ -89,6 +89,33 @@ in
       expected = "tag[0:11] - expected bad got lor";
     };
 
+    testPure = {
+      expr = md.dump (md.pure "result" loremSlice);
+      expected = "result";
+    };
+
+    ###############
+    # combinators #
+    ###############
+
+    testBindCallsFunction = let
+      matchLorem = md.tag "lorem";
+      appendDolor = str: md.pure "${str} dolor";
+      parser = md.bind matchLorem appendDolor;
+    in {
+      expr = md.dump (parser loremSlice);
+      expected = "lorem dolor";
+    };
+
+    testBindPropagatesFailure = let
+      matchIpsum = md.tag "ipsum";
+      appendDolor = str: md.pure "${str} dolor";
+      parser = md.bind matchIpsum appendDolor;
+    in {
+      expr = md.dump (parser loremSlice);
+      expected = "tag[0:11] - expected ipsum got lorem\nbind[0:11] - not successful";
+    };
+
     testSkipThenOk = let
       lorem = md.tag "lorem ";
       ipsum = md.tag "ipsum";
@@ -97,8 +124,4 @@ in
       expr = md.dump (parser loremSlice);
       expected = "ipsum";
     };
-
-    ###############
-    # combinators #
-    ###############
   }

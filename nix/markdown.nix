@@ -147,20 +147,30 @@ rec {
     else
 
     [ (dropN tokenLength slice) k ];
+  
+  /*
+  pure - consume nothing and return this value
+  */
+  pure = x: slice:
+    [ slice x ];
 
   ###############
   # combinators #
   ###############
 
   /*
-  apply f to the value if successful (nom map)
+  bind
+    parse - run this, and if it succeeds
+    f - call this function with the result, returning a new parser
+    which is then run on the remainder
   */
   bind = parse: f: slice:
     let result = parse slice; in
     if failed result
-      then failWith result "map" slice "not successful"
+      then failWith result "bind" slice "not successful"
     else
-      (f (elemAt result 1)) (elemAt result 0);
+    
+    (f (elemAt result 1)) (elemAt result 0);
 
   /*
   skipThen 
