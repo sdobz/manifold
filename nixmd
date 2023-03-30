@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+if  [ $# -lt 1 ] || [ ! -f "$1" ]; then
+    echo "Usage: $0 <somefile.md>"
+    exit 1
+fi
+SOURCE_TEXT="$(realpath "$1")"
+nix-instantiate --eval -E "with import ./nix/markdown.nix; evalFile \"$SOURCE_TEXT\""

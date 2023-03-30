@@ -1,31 +1,54 @@
 {
   description = "literate programming in markdown using nix";
+  inputs = {};
+  outputs = { self, nixpkgs }: let
+    forAllSystems = nixpkgs.lib.genAttrs [ "x86_64-linux" "x86_64-darwin" "i686-linux" "aarch64-linux" ];
+  in {
+      legacyPackages = forAllSystems (system: import nixpkgs {
+        inherit system;
+      });
 
-  inputs = {
-    flake-utils.url = "github:numtide/flake-utils";
-  };
+      packages = forAllSystems (system: let
+        pkgs = self.legacyPackages."${system}";
+        markdown_nix = ./nix/markdown.nix;
+        runtimeInputs = [ pkgs.nix ];
+      in {
+        nixmd = pkgs.writeScriptBin "nixmd"
+          ''
+          #!${pkgs.runtimeShell}
+          set -o errexit
+          set -o nounset
+          set -o pipefail
 
-  outputs = { self, nixpkgs, flake-utils }:
-    flake-utils.lib.eachSystem
-    [
-      flake-utils.lib.system.x86_64-linux
-    ]
-    (
-      system: let {
-        pkgs = nixpkgs.legacyPackages.${system};
+          export PATH="${pkgs.lib.makeBinPath runtimeInputs}:$PATH"
 
-        markdown = pkgs.callPackage nix/markdown.nix {  };
+          if  [ $# -lt 1 ] || [ ! -f "$1" ]; then
+              echo "Usage: $0 <somefile.md>"
+              exit 1
+          fi
+          SOURCE_TEXT="$(realpath "$1")"
+          nix-instantiate --eval -E "with import ${markdown_nix}; evalFile \"$SOURCE_TEXT\""
+          '';
+      });
 
-        packages = {};
+      defaultPackage = forAllSystems (system: self.packages."${system}".nixmd);
 
-        devShell =
-          pkgs.mkShell {
-            buildInputs = with pkgs; [
-            ];
+      apps = forAllSystems (system: {
+        nixmd = {
+          type = "app";
+          program = "${self.packages."${system}".nixmd}/bin/nixmd";
+        };
+      });
+      defaultApp = forAllSystems (system: self.apps."${system}".nixmd);
+
+      devShell =  forAllSystems (system: 
+        self.legacyPackages."${system}".mkShell {
+            buildInputs = [ self.packages."${system}".nixmd ];
             buildPhase = "";
-            shellHook = '''';
-          };
-      }
-    )
+            shellHook = ''
+            
+            '';
+          }
+      );
   };
 }

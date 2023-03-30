@@ -153,15 +153,20 @@ rec {
   */
   pure = x: slice:
     [ slice x ];
+  
+  /*
+  regex - if a match is successful
+    then return the array of capture groups as a result and consume
+  */
 
   ###############
   # combinators #
   ###############
 
   /*
-  bind
+  bind aka >>=
     parse - run this, and if it succeeds
-    f - call this function with the result, returning a new parser
+    f - call this function with the result (returns a new parser)
     which is then run on the remainder
   */
   bind = parse: f: slice:
@@ -178,4 +183,158 @@ rec {
     if it succeeds run the second parser
   */
   skipThen = parseA: parseB: bind parseA (_: parseB);
+
+  /*
+  frontmatter
+  */
+
+  # toml parsing
+
+  /*
+  action - performed during derivation
+  */
+
+  # eval'd?
+
+  /*
+  tag
+  */
+
+  /*
+  execution
+  */
+  evalFile = filename: let
+    contents = readFile filename;
+  in
+    stringLength contents;
 }
+
+/*
+
+https://richardstartin.github.io/posts/xxhash
+
+
+final function signature:
+md.dump md.parseMD md.makeSlice sourceText
+->
+write to file (woven)
+
+alternative tangle/weave, storyteller:
+juggler: throw/catch
+carpenter: cut/join
+plumber!: pipe/filter
+category theory: monad/set
+astronomer: lens
+biologist: scope
+async/await
+
+"at a point in time"
+
+what IS this?
+- source code runtime
+- observable nix evaluation
+
+syntactically valid in multiple contexts
+The belief that you should not attempt to synchronize semantics across documents
+
+ synchronous semantics
+asynchronous operations
+
+md = 
+  | frontmatter - toml state declaration
+  +  imports
+  |  
+
++++
+_inherit = "nix/markdown.nix"
++++
+
+  | source - text (markdown)
+
+# context
+copied verbatim
+
+  | action - stateful transformation
+
+```bash nix shell -p hello
+hello --greeting \(greeting)
+```
+  | retain - track memory used by program
+  | * evict over time
+  | * cache expiration
+
+
+  | tags - view evaluated state
+
+<code value="previous.stdout">
+hi
+</code>
+
+  | trigger - initiate transform
+  | state - changes through runtime
+  +  timeseries - loldb (making a video that replays the sensor data)
+  |  "hooks" - signals
+
+action =
+  | trigger - how this action appears (enum)
+  | deps - which values have to be resolved for this action to "fire"
+  | ref - how to identify this action
+  | implicit output
+
+state =
+  | status - enum (error, etc)
+  | 
+
+tag =
+  | expression
+  | reference
+
+how to determine evaluation order? topological sort evaluation
+
+tags are nixmd
+
+<nixmd story="${expre}"  />
+
+expr:
+  run this command
+  depend on every reference to state
+  path: some fs reference
+  state returns: a typed artifact produced by the previous expression
+
+
+(lexeme - trim trailing whitespace from all symbols)
+transform to <frontend
+
+into: literate programming?
+
+weave -> grammar
+
+mkDerivation - passed "nix" results in the same dir but woven
+
+When run it produces a derivation and uses that to satisfy the result
+Expressions could be pure nix evaluations
+Final file is just a string interpolation of the source text
+
+frontmatter:
+describes runtime, comprised of
+* nix scope
+
+result:
+somefile.nix
+
+silly idea:
+control a machine
+require "camera running"
+goal: gcode sender on esp32
+
+
+
+post gcode
+
+unity frontend? backend?
+
+
+realtime 2d - view graph automatically pans to location in 3d space
+can navigate both simultaneously
+
+*/
