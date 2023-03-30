@@ -27,7 +27,8 @@
               exit 1
           fi
           SOURCE_TEXT="$(realpath "$1")"
-          nix-instantiate --eval -E "with import ${markdown_nix}; evalFile \"$SOURCE_TEXT\""
+          MARKDOWN_NIX="''${MARKDOWN_NIX:-${markdown_nix}}"
+          nix-instantiate --eval -E "with import \"$MARKDOWN_NIX\"; evalFile \"$SOURCE_TEXT\""
           '';
       });
 
