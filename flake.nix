@@ -22,13 +22,19 @@
 
           export PATH="${pkgs.lib.makeBinPath runtimeInputs}:$PATH"
 
-          if  [ $# -lt 1 ] || [ ! -f "$1" ]; then
-              echo "Usage: $0 <somefile.md>"
+          if  [ $# -lt 2 ] || [ ! -f "$2" ]; then
+              echo "Usage: $0 <cmd> <somefile.md>"
               exit 1
           fi
-          SOURCE_TEXT="$(realpath "$1")"
+          CMD="$1"
+          SOURCE_TEXT="$(realpath "$2")"
           MARKDOWN_NIX="''${MARKDOWN_NIX:-${markdown_nix}}"
-          nix-instantiate --eval -E "with import \"$MARKDOWN_NIX\"; evalFile \"$SOURCE_TEXT\""
+          nix-instantiate \
+            --read-write-mode \
+            --show-trace \
+            --eval -E "\
+              with import \"$MARKDOWN_NIX\"; \
+              $CMD \"$SOURCE_TEXT\""
           '';
       });
 

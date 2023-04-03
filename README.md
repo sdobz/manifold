@@ -16,8 +16,7 @@ Building a parser (combinator)
 * [structure editor](https://en.wikipedia.org/wiki/Structure_editor)
 * [1982 Syntax-directed editing--towards integrating programming environments](https://apps.dtic.mil/sti/pdfs/ADA117970.pdf)
 * [axiom - computer algebra system](https://github.com/daly/axiom)
-
-
+* [Nixpkgs overlays are monoids ](https://www.haskellforall.com/2022/01/nixpkgs-overlays-are-monoids.html)
 
 ## Goal
 
@@ -27,17 +26,19 @@ Building a parser (combinator)
 
 ### Syntax / Parsing
 
-Markdown is read line by line. Language hints on code blocks invoke actions by  "parameter" and the body of the code block is passed in as well
+The file is parsed once, top to bottom, and a runtime representation is built. The only syntax handled by nixmd is code blocks, and self closing html tags.
 
-Each handler retains state per file, perhaps implemented as a continuation? Monad?
+The markdown is translated into a nix file which represents a script.
 
-Handlers might output "execution results" which are included after the file
+Available tags are:
+* `<nix trace="<expr>" overlay="self: super: { <expr> }" />`
+* `<with <attr>="<default expr>" />`
 
-All "input" to a handler is hashed and referenced after the tag
+Each time a tag is encountered an overlay is created that is passed the state attribute set.
 
-If the "input hash" doesn't match then the handler is run again
+Each time a code block is encountered an overlay is created that stores the text of the block.
 
-
+All overlays are stored in an array and 
 
 ### Runtime / Tangling
 
@@ -46,44 +47,7 @@ If the "input hash" doesn't match then the handler is run again
 ### Results / Weaving
 
 
-
-## Optimistic Programming Example
-
-The `bash` handler runs the command and passes the code block to stdin
-
-TODO: how to maintain purity?
-
-<nixmd import="nix/markdown.nix" />
-
-```bash nix shell nixpkgs#hello
-hello --greeting "GOSH HI THERE"
-```
-
-<!-- some hash -->
-<code>
-GOSH HI THERE
-</code>
-<!-- /some hash -->
-
-## Use case
-
-Add linting to a project README and solicit help
-
-+++
-toml = "ok"
-+++
-
 # Outstanding questions
-
-* How do various markdown renderers deal with:
-    * extra text after language name
-    * comments
-    * tags
-    * data in tags
-* How do handlers pass state?
-* How do handlers refer to each other?
-* How to "enforce" handler purity?
-* How are hashes computed?
 
 ## Philosophy
 
@@ -114,11 +78,6 @@ source code runtime
 
 A sufficiecntly lucid explanation of what your program does can be interpreted to be the source code
 
-
-
-### Optimization
-
-Handler input should be deterministic and lazily evaluated
 
 # Implementation
 
