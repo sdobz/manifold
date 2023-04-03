@@ -94,6 +94,24 @@ in
       expected = "result";
     };
 
+    testFmap = let
+      justLorem = md.pure "lorem";
+      appendSinAmatTo = value: value + " sin amat";
+      parser = md.fmap appendSinAmatTo justLorem;
+    in {
+      expr = md.dump (parser loremSlice);
+      expected = "lorem sin amat";
+    };
+
+    testFmapFail = let
+      notLorem = md.tag "not lorem";
+      appendSinAmatTo = value: value + " sin amat";
+      parser = md.fmap appendSinAmatTo notLorem;
+    in {
+      expr = md.dump (parser loremSlice);
+      expected = "tag[0:11] - expected not lorem got lorem ips";
+    };
+
     ###############
     # combinators #
     ###############
@@ -116,12 +134,39 @@ in
       expected = "tag[0:11] - expected ipsum got lorem\nbind[0:11] - not successful";
     };
 
-    testSkipThenOk = let
+    testSkipThen = let
       lorem = md.tag "lorem ";
       ipsum = md.tag "ipsum";
       parser = md.skipThen lorem ipsum;
     in {
       expr = md.dump (parser loremSlice);
       expected = "ipsum";
+    };
+
+    testSkipThenFail = let
+      lorem = md.tag "not lorem ";
+      ipsum = md.tag "ipsum";
+      parser = md.skipThen lorem ipsum;
+    in {
+      expr = md.dump (parser loremSlice);
+      expected = "tag[0:11] - expected not lorem  got lorem ipsu\nbind[0:11] - not successful";
+    };
+
+    testThenSkip = let
+      lorem = md.tag "lorem";
+      ipsum = md.tag " ipsum";
+      parser = md.thenSkip lorem ipsum;
+    in {
+      expr = md.dump (parser loremSlice);
+      expected = "lorem";
+    };
+
+    testThenSkipFail = let
+      lorem = md.tag "not lorem";
+      ipsum = md.tag " ipsum";
+      parser = md.thenSkip lorem ipsum;
+    in {
+      expr = md.dump (parser loremSlice);
+      expected = "tag[0:11] - expected not lorem got lorem ips\nbind[0:11] - not successful";
     };
   }

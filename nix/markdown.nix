@@ -151,8 +151,23 @@ rec {
   /*
   pure - consume nothing and return this value
   */
-  pure = x: slice:
-    [ slice x ];
+  pure = value: slice:
+    [ slice value ];
+
+  /*
+  fmap - call the function with the value the parser produced
+  */
+  fmap = f: parser: slice:
+    let result = parser slice; in
+    
+    if failed result
+      then result
+    else let
+      remainder = elemAt result 0;
+      value = elemAt result 1;
+    in
+
+    [ remainder (f value) ];
   
   /*
   regex - if a match is successful
@@ -185,20 +200,11 @@ rec {
   skipThen = parseA: parseB: bind parseA (_: parseB);
 
   /*
-  frontmatter
+  thenSkip
+    runs the first parser
+    then the second
   */
-
-  # toml parsing
-
-  /*
-  action - performed during derivation
-  */
-
-  # eval'd?
-
-  /*
-  tag
-  */
+  thenSkip = parseA: parseB: bind parseA (resultA: fmap (_: resultA) parseB);
 
   /*
   execution
