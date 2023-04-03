@@ -62,6 +62,9 @@ with builtins;
 #         else op (elemAt list n) (fold' (n + 1));
 #     in fold' 0;
 # };
+with {
+  traceID = id: trace id id;
+};
 rec {
   ##########
   # slices #
@@ -170,9 +173,28 @@ rec {
     [ remainder (f value) ];
   
   /*
-  regex - if a match is successful
-    then return the array of capture groups as a result and consume
+  takeWhile - consume characters until the test fails
   */
+  takeWhile = testSlice: slice:
+    let
+      offset = elemAt slice 0;
+      length = elemAt slice 1;
+      text = elemAt slice 2;
+      search = searchOffset:
+        if searchOffset >= length || !(testSlice (dropN searchOffset slice))
+          then searchOffset
+          else search (searchOffset + 1);
+
+      foundOffset = search 0;
+    in
+
+    [ (dropN foundOffset slice) (substring offset foundOffset text) ];
+
+  /*
+  takeUntil - consume characters until the parser succeeds
+  */
+  takeUntil = parseUntil:
+    takeWhile (searchSlice: failed (parseUntil searchSlice));
 
   ###############
   # combinators #
@@ -195,16 +217,40 @@ rec {
   /*
   skipThen 
     runs the first parser
-    if it succeeds run the second parser
+    if it succeeds return the results of the second parser
   */
   skipThen = parseA: parseB: bind parseA (_: parseB);
 
   /*
   thenSkip
-    runs the first parser
-    then the second
+    runs the first parser and store the results
+    then consume using the second
   */
   thenSkip = parseA: parseB: bind parseA (resultA: fmap (_: resultA) parseB);
+
+  /*
+  between
+    run the three parsers
+    and resolve to the middle value
+  */
+  between = parseStart: parseEnd: parseMiddle:
+    skipThen parseStart (thenSkip parseMiddle parseEnd);
+
+  #########
+  # lexer #
+  #########
+
+  isWhitespace = slice:
+    let nextChar = peekN 1 slice; in
+    nextChar == " " || nextChar == "\t" || nextChar == "\n";
+  
+  lexeme = parser: thenSkip parser (takeWhile isWhitespace);
+
+  isIdentifier = slice:
+    let nextChar = peekN 1; in
+    match "[a-zA-Z0-9_]" name != null;
+
+  identifier = lexeme (takeWhile isIdentifier);
 
   /*
   execution

@@ -112,6 +112,14 @@ in
       expected = "tag[0:11] - expected not lorem got lorem ips";
     };
 
+    testTakeUntil = let
+      ips = md.tag " ips";
+      parser = md.takeUntil ips;
+    in {
+      expr = md.dump (parser emipsSlice);
+      expected = "em";
+    };
+
     ###############
     # combinators #
     ###############
@@ -168,5 +176,28 @@ in
     in {
       expr = md.dump (parser loremSlice);
       expected = "tag[0:11] - expected not lorem got lorem ips\nbind[0:11] - not successful";
+    };
+
+    testBetween = let
+      lor = md.tag "lor";
+      emIp = md.tag "em ip";
+      sum = md.tag "sum";
+      parser = md.between lor sum emIp;
+    in {
+      expr = md.dump (parser loremSlice);
+      expected = "em ip";
+    };
+
+    #########
+    # lexer #
+    #########
+    testLexeme = let
+      lorem = md.lexeme (md.tag "lorem");
+      ipsum = md.tag "ipsum";
+      parser = md.thenSkip lorem ipsum;
+      result = parser loremSlice;
+    in {
+      expr = md.dump result;
+      expected = "lorem";
     };
   }
