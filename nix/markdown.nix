@@ -359,14 +359,16 @@ rec {
   equals = lexeme (tag "=");
   storeHtmlTagAttribute = storeAttribute "name" (thenSkip attribute equals);
   # `"value"` => {value="value";}
+  quoteEval = tag "'";
+  storeHtmlTagEval = storeAttribute "eval" (between quoteEval quoteEval (takeUntil quoteEval));
   quote = tag "\"";
-  storeHtmlTagValue = storeAttribute "value" (between quote quote (takeUntil quote));
-  # {name="attr";value="value";}
+  storeHtmlTagString = storeAttribute "string" (between quote quote (takeUntil quote));
+  storeHtmlTagValue = opt [ storeHtmlTagEval storeHtmlTagString ];
+  # {name="attr";string="value";}
   combineHtmlAttributeValue = lexeme (combineAttributes [storeHtmlTagAttribute storeHtmlTagValue]);
-  # {attr="value";..}
-  combineHtmlAttributeValues = fmap listToAttrs (many combineHtmlAttributeValue);
-  storeHtmlTagAttributes = lexeme (storeAttribute "attributes" combineHtmlAttributeValues);
-  # { attributes = { .. } }
+  # [ {..} {..} ]
+  storeHtmlTagAttributes = lexeme (storeAttribute "attributes" (many combineHtmlAttributeValue));
+  # { attributes = [ .. ] }
   storeHtmlTagAttrs = combineAttributes [ storeHtmlTagType storeHtmlTagAttributes ];
   htmlTagClose = tag "/>";
 
@@ -394,11 +396,18 @@ rec {
   # runtime #
   ###########
 
-  filterType = type: ast: filter (node: node.type == type) ast;
+  renderNodeAttribute = nodeAttribute:
+    if hasAttr "string" nodeAttribute
+      then ''"${nodeAttribute.string}"''
+      else nodeAttribute.eval;
 
-  # makeArgs = ast:
-  #   let argsNodes = filterType "arg"
-      
+  makeArgs = ast:
+    let
+      argsNodes = filter (node: node.type == "arg") ast;
+      argsList = foldl' (root: val: root ++ val) [] (map (node: node.attributes) argsNodes);
+      argsStrings = map (nodeAttribute: "${nodeAttribute.name} ? ${renderNodeAttribute nodeAttribute}") argsList;
+    in
+      concatStringsSep ", " argsStrings;
 
   # makeNix = { args,  }:
 

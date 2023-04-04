@@ -9,26 +9,32 @@ let
 
   nixmdSlice = md.makeSlice ''
     plain text
-    <let tag1="v1" />
-    ```code1
+    <arg param="default" number='1' />
+    more plain text
+    ```code
     some code
     ```
-    more plain text
-    <let tag2="v2" />
-    ```code2
-    more code
-    ```
+    <let binding='code' sum='number + 1' />
+    <nix eval="''${binding} ''${sum}" />
   '';
 
-  nixmdAst = [
+  nixmdAst =  [
     { text = "plain text\n"; type = "text"; }
-    { attributes = { tag1 = "v1"; }; type = "let"; }
-    { text = "\n"; type = "text"; }
-    { id = "code1"; text = "some code\n"; type = "code"; }
+    { attributes = [
+      { name = "param"; string = "default"; }
+      { eval = "1"; name = "number"; }
+    ]; type = "arg"; }
     { text = "\nmore plain text\n"; type = "text"; }
-    { attributes = { tag2 = "v2"; }; type = "let"; }
+    { id = "code"; text = "some code\n"; type = "code"; }
     { text = "\n"; type = "text"; }
-    { id = "code2"; text = "more code\n"; type = "code"; }
+    { attributes = [
+      { eval = "code"; name = "binding"; }
+      { eval = "number + 1"; name = "sum"; }
+    ]; type = "let"; }
+    { text = "\n"; type = "text"; }
+    { attributes = [
+      { string = "\${binding} \${sum}"; name = "eval"; }
+    ]; type = "nix"; }
     { text = "\n"; type = "text"; }
   ];
 in
@@ -344,25 +350,32 @@ in
       expected = { type = "nix"; };
     };
 
-    testHtmlAttributeValue = let
-      htmlTagAttributeSlice = md.makeSlice "attr1=\"value1\"";
+    testHtmlAttributeString = let
+      htmlTagAttributeSlice = md.makeSlice ''attr="value"'';
     in {
       expr = md.dump (md.combineHtmlAttributeValue htmlTagAttributeSlice);
-      expected = { name = "attr1"; value = "value1"; };
+      expected = { name = "attr"; string = "value"; };
+    };
+
+    testHtmlAttributeEval = let
+      htmlTagAttributeSlice = md.makeSlice ''attr='value''''';
+    in {
+      expr = md.dump (md.combineHtmlAttributeValue htmlTagAttributeSlice);
+      expected = { name = "attr"; eval = "value"; };
     };
 
     testStoreHtmlTagAttributeValues = let
-       htmlTagAttributesSlice = md.makeSlice "attr1=\"value1\" attr2=\"value2\"";
+       htmlTagAttributesSlice = md.makeSlice ''attr1="value" attr2='value''''';
     in {
       expr = md.dump (md.storeHtmlTagAttributes htmlTagAttributesSlice);
-      expected = { attributes = { attr1 = "value1"; attr2 = "value2"; }; };
+      expected = { attributes = [ { name = "attr1"; string = "value"; } { name = "attr2";  eval = "value"; } ]; };
     };
 
     testHtmlTag = let
-      htmlTagSlice = md.makeSlice "<nix attr1=\"value1\" attr2=\"value2\" />";
+      htmlTagSlice = md.makeSlice ''<nix attr1="value" attr2='value' />'';
     in {
       expr = md.dump (md.htmlTagNode htmlTagSlice);
-      expected = { attributes = { attr1 = "value1"; attr2 = "value2"; }; type = "nix"; };
+      expected = { attributes = [ { name = "attr1"; string = "value"; } { name = "attr2";  eval = "value"; } ]; type = "nix"; };
     };
 
     testPlainTextBeforeTag = let
@@ -383,4 +396,9 @@ in
     ###########
     # runtime #
     ###########
+
+    testMakeArgs = {
+      expr = md.makeArgs nixmdAst;
+      expected = ''param ? "default", number ? 1'';
+    };
   }
