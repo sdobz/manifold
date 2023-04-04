@@ -11,24 +11,6 @@ This should be constructed in itself
 
 To get there we have to implement a subset of the language to detangle the readme
 (which implements the real environment)
-*/
-
-/*
-
-Design:
-http://cmsc-16100.cs.uchicago.edu/2017/Lectures/17/parsers.pdf - implements parser combinatorials in gofer (aka haskell lite)
-
-initial goal:
-implement arithmatic evaluator in nix
-
-Example:
-https://medium.com/@MrJamesFisher/nix-by-example-a0063a1a4c55 - demonstrates parsing the nix AST
-
-Hasura writing a json parser in haskell
-https://hasura.io/blog/parser-combinators-walkthrough/
-
-Parsec style parser for markdown:
-https://github.com/tiqwab/md-parser
 
 soft requirment:
   - match rust `nom` so they can share combinators
@@ -52,16 +34,6 @@ Can be composed to represent a stack trace
 */
 
 with builtins;
-# with rec {
-#   foldr = op: nul: list:
-#     let
-#       len = length list;
-#       fold' = n:
-#         if n == len
-#         then nul
-#         else op (elemAt list n) (fold' (n + 1));
-#     in fold' 0;
-# };
 with {
   traceID = id: trace id id;
 };
@@ -285,6 +257,30 @@ rec {
   */
   many = parser: slice:
     fold [] (collection: value: collection ++ [value]) parser slice;
+  
+  /*
+  mapReduce
+    starting with root
+    apply operator
+    to the value of each parser
+  */
+  mapReduce = root: operator: parsers: slice:
+    if length parsers == 0
+      then [ slice root ]
+    else
+
+    let result = (head parsers) slice; in
+    if failed result
+      then failWith result "each" slice "one failed"
+    else
+
+    let
+      newSlice = elemAt result 0;
+      value = elemAt result 1;
+      newRoot = operator root value;
+    in
+
+    mapReduce newRoot operator (tail parsers) newSlice;
 
   /*
   eof
@@ -320,31 +316,24 @@ rec {
   storeAttribute = attribute: parser:
     fmap (value: { ${attribute} = value; }) parser;
 
+  /*
+  assuming each parser returns an attribute set combine all of the results
+  */
+  combineAttributes = parsers: mapReduce {} (root: value: root // value) parsers;
+
   # code fence with id
 
   codeFence = tag "```";
+  storeCodeToken = pure { "token" = "code"; };
   storeCodeId = storeAttribute "id" attribute;
   storeCodeText = storeAttribute "text" (takeUntil codeFence);
-
-  storeCodeAttrs = bind storeCodeId (idSet: (fmap (textSet: idSet // textSet) storeCodeText));
+  storeCodeAttrs = combineAttributes [ storeCodeToken storeCodeId storeCodeText ];
   codeBlockToken = between codeFence codeFence storeCodeAttrs;
 
   tokens = opt [
-    identifiedCodeBlock
+    codeBlockToken
     eof
   ];
-
-  # htmlTag
-  # attributePair
-  # quotedExpression
-
-  # do we tokenize?
-  # can the source code be runtime'd linearly?
-  # no in the case of compositonal args
-
-  # { arg, arg, arg }:
-  # let
-  # code block -> super: self: { thinger = ''<body>''; }
 
   /*
   execution
@@ -354,133 +343,3 @@ rec {
   in
     stringLength contents;
 }
-
-/*
-
-https://richardstartin.github.io/posts/xxhash
-
-
-final function signature:
-md.dump md.parseMD md.makeSlice sourceText
-->
-write to file (woven)
-
-alternative tangle/weave, storyteller:
-juggler: throw/catch
-carpenter: cut/join
-plumber!: pipe/filter
-category theory: monad/set
-astronomer: lens
-biologist: scope
-async/await
-
-"at a point in time"
-
-what IS this?
-- source code runtime
-- observable nix evaluation
-
-syntactically valid in multiple contexts
-The belief that you should not attempt to synchronize semantics across documents
-
- synchronous semantics
-asynchronous operations
-
-md = 
-  | frontmatter - toml state declaration
-  +  imports
-  |  
-
-+++
-_inherit = "nix/markdown.nix"
-+++
-
-  | source - text (markdown)
-
-# context
-copied verbatim
-
-  | action - stateful transformation
-
-```bash nix shell -p hello
-hello --greeting \(greeting)
-```
-  | retain - track memory used by program
-  | * evict over time
-  | * cache expiration
-
-
-  | tags - view evaluated state
-
-<code value="previous.stdout">
-hi
-</code>
-
-  | trigger - initiate transform
-  | state - changes through runtime
-  +  timeseries - loldb (making a video that replays the sensor data)
-  |  "hooks" - signals
-
-action =
-  | trigger - how this action appears (enum)
-  | deps - which values have to be resolved for this action to "fire"
-  | ref - how to identify this action
-  | implicit output
-
-state =
-  | status - enum (error, etc)
-  | 
-
-tag =
-  | expression
-  | reference
-
-how to determine evaluation order? topological sort evaluation
-
-tags are nixmd
-
-<nixmd story="${expre}"  />
-
-expr:
-  run this command
-  depend on every reference to state
-  path: some fs reference
-  state returns: a typed artifact produced by the previous expression
-
-
-(lexeme - trim trailing whitespace from all symbols)
-transform to <frontend
-
-into: literate programming?
-
-weave -> grammar
-
-mkDerivation - passed "nix" results in the same dir but woven
-
-When run it produces a derivation and uses that to satisfy the result
-Expressions could be pure nix evaluations
-Final file is just a string interpolation of the source text
-
-frontmatter:
-describes runtime, comprised of
-* nix scope
-
-result:
-somefile.nix
-
-silly idea:
-control a machine
-require "camera running"
-goal: gcode sender on esp32
-
-
-
-post gcode
-
-unity frontend? backend?
-
-
-realtime 2d - view graph automatically pans to location in 3d space
-can navigate both simultaneously
-
-*/

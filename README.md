@@ -2,22 +2,6 @@
 
 Literate programming is the upside - down inverse of what a computer expects. It presents the code to a human audience and adds a build step to help the computer figure it out.
 
-## Reference material
-
-* [tangledown.py](https://github.com/rebcabin/tangledown)
-
-Building a parser (combinator)
-* [nix parsec](https://github.com/kanwren/nix-parsec/blob/master/parsec.nix)
-* [nom-rs](https://github.com/rust-bakery/nom)
-* [hasura parser-combinator](https://hasura.io/blog/parser-combinators-walkthrough/)
-* [functional parsers](http://cmsc-16100.cs.uchicago.edu/2017/Lectures/17/parsers.pdf)
-* [monadic runtime](https://dev.to/javalin/zero-boilerplate-zero-runtime-errors-coding-with-monads-26n9)
-* [frontmatter - markdown cms](https://frontmatter.codes/)
-* [structure editor](https://en.wikipedia.org/wiki/Structure_editor)
-* [1982 Syntax-directed editing--towards integrating programming environments](https://apps.dtic.mil/sti/pdfs/ADA117970.pdf)
-* [axiom - computer algebra system](https://github.com/daly/axiom)
-* [Nixpkgs overlays are monoids ](https://www.haskellforall.com/2022/01/nixpkgs-overlays-are-monoids.html)
-
 ## Goal
 
 1. Source markdown files are tangled into an executable form
@@ -118,7 +102,24 @@ https://doc.rust-lang.org/cargo/reference/build-scripts.html
 rerun-if instructions 
 
 
+## Reference material
 
+* [tangledown.py](https://github.com/rebcabin/tangledown)
+
+Building a parser (combinator)
+* [nix parsec](https://github.com/kanwren/nix-parsec/blob/master/parsec.nix)
+* [nom-rs](https://github.com/rust-bakery/nom)
+* [hasura parser-combinator](https://hasura.io/blog/parser-combinators-walkthrough/)
+* [functional parsers](http://cmsc-16100.cs.uchicago.edu/2017/Lectures/17/parsers.pdf)
+* [monadic runtime](https://dev.to/javalin/zero-boilerplate-zero-runtime-errors-coding-with-monads-26n9)
+* [frontmatter - markdown cms](https://frontmatter.codes/)
+* [structure editor](https://en.wikipedia.org/wiki/Structure_editor)
+* [1982 Syntax-directed editing--towards integrating programming environments](https://apps.dtic.mil/sti/pdfs/ADA117970.pdf)
+* [axiom - computer algebra system](https://github.com/daly/axiom)
+* [Nixpkgs overlays are monoids ](https://www.haskellforall.com/2022/01/nixpkgs-overlays-are-monoids.html)
+* [parsing the nix AST](https://medium.com/@MrJamesFisher/nix-by-example-a0063a1a4c55)
+* [writing a json parser in haskell](https://hasura.io/blog/parser-combinators-walkthrough/)
+* [Parsec style parser for markdown](https://github.com/tiqwab/md-parser)
 
 # Motivating project
 

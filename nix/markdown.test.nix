@@ -234,6 +234,16 @@ in
       expected = [ "1" "1" "1" ];
     };
 
+    testMapReduce = let
+      parse1 = md.tag "1";
+      operator = root: _value: root + 1;
+      parser = md.mapReduce 0 operator [ parse1 parse1 parse1 ];
+      threeOnes = md.makeSlice "111";
+    in {
+      expr = md.dump (parser threeOnes);
+      expected = 3;
+    };
+
     testEof = let
       loremIpsum = md.tag "lorem ipsum";
       parser = md.thenSkip loremIpsum md.eof;
@@ -274,6 +284,18 @@ in
       expected = { firstWord = "lorem"; };
     };
 
+    testCombineAttributes = let
+      storeFirst = md.storeAttribute "first" md.attribute;
+      storeSecond = md.storeAttribute "second" md.attribute;
+      parser = md.combineAttributes [ storeFirst storeSecond ];
+    in {
+      expr = md.dump (parser loremSlice);
+      expected = {
+        first = "lorem";
+        second = "ipsum";
+      };
+    };
+
     testCodeBlock = let
       codeSlice =  md.makeSlice ''
         ```codeId
@@ -284,6 +306,7 @@ in
     in {
       expr = md.dump (md.codeBlockToken codeSlice);
       expected = {
+        token = "code";
         id = "codeId";
         text = "code body\nmultiline\n";
       };
