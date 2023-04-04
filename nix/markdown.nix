@@ -236,6 +236,59 @@ rec {
   between = parseStart: parseEnd: parseMiddle:
     skipThen parseStart (thenSkip parseMiddle parseEnd);
 
+  /*
+  opt
+    run each parser until once succeeds, or fail
+  */
+  opt = parsers: slice:
+    let result = (head parsers) slice; in
+
+    if !(failed result)
+      then result
+    else
+
+    if length parsers > 1
+      then opt (tail parsers) slice
+    else
+
+    fail "opt" slice "no parser succeeded";
+
+  /*
+  fold
+    run the parser zero or more times
+    applying the operator
+    stops on failure
+  */
+  fold = root: operator: parser: slice:
+    let result = parser slice; in
+    if failed result
+      then [ slice root ]
+    else
+    
+    let
+      newSlice = elemAt result 0;
+      value = elemAt result 1;
+      newRoot = operator root value;
+    in
+
+    fold newRoot operator parser newSlice;
+
+  /*
+  many
+    run a parser until it fails, collecting the results in a list
+  */
+  many = parser: slice:
+    fold [] (collection: value: collection ++ [value]) parser slice;
+
+  /*
+  eof
+    fails if there is remaining input
+  */
+  eof = slice:
+    if elemAt slice 1 != 0
+      then fail "eof" slice "expected EOF"
+      else [ slice null ];
+
   #########
   # lexer #
   #########
@@ -251,6 +304,20 @@ rec {
     match "[a-zA-Z0-9_]" name != null;
 
   identifier = lexeme (takeWhile isIdentifier);
+
+  codeFence = tag "```";
+
+  # htmlTag
+  # attributePair
+  # quotedExpression
+
+  # do we tokenize?
+  # can the source code be runtime'd linearly?
+  # no in the case of compositonal args
+
+  # { arg, arg, arg }:
+  # let
+  # code block -> super: self: { thinger = ''<body>''; }
 
   /*
   execution

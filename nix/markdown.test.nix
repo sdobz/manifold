@@ -188,6 +188,61 @@ in
       expected = "em ip";
     };
 
+    testOpt = let
+      notLorem = md.tag "not lorem";
+      lorem = md.tag "lorem";
+      parser = md.opt [ notLorem lorem ];
+    in {
+      expr = md.dump (parser loremSlice);
+      expected = "lorem";
+    };
+
+    testOptNoMatch = let
+      notLorem = md.tag "not lorem";
+      alsoNotLorem = md.tag "also lorem";
+      parser = md.opt [ notLorem alsoNotLorem ];
+    in {
+      expr = md.dump (parser loremSlice);
+      expected = "opt[0:11] - no parser succeeded";
+    };
+
+    testFold = let
+      parse1 = md.tag "1";
+      operator = root: _value: root + 1;
+      parser = md.fold 0 operator parse1;
+      fiveOnes = md.makeSlice "11111";
+    in {
+      expr = md.dump (parser fiveOnes);
+      expected = 5;
+    };
+
+    testMany = let
+      parse1 = md.tag "1";
+      operator = root: _value: root + 1;
+      parser = md.many parse1;
+      threeOnes = md.makeSlice "111";
+    in {
+      expr = md.dump (parser threeOnes);
+      expected = [ "1" "1" "1" ];
+    };
+
+    testEof = let
+      loremIpsum = md.tag "lorem ipsum";
+      parser = md.thenSkip loremIpsum md.eof;
+    in {
+      expr = md.dump (parser loremSlice);
+      expected = "lorem ipsum";
+    };
+
+    testEofFail = let
+      loremIpsum = md.tag "lorem ipsum";
+      extraLoremSlice = md.makeSlice "lorem ipsum!!1";
+      parser = md.thenSkip loremIpsum md.eof;
+    in {
+      expr = md.dump (parser extraLoremSlice);
+      expected = "eof[11:3] - expected EOF";
+    };
+
     #########
     # lexer #
     #########
