@@ -120,6 +120,14 @@ in
       expected = "em";
     };
 
+    testTakeRegex = let
+      testSlice = md.makeSlice "abbacadaba";
+      parser = md.takeRegex "[abc]";
+    in {
+      expr = md.dump (parser testSlice);
+      expected = "abbaca";
+    };
+
     ###############
     # combinators #
     ###############
@@ -254,5 +262,15 @@ in
     in {
       expr = md.dump result;
       expected = "lorem";
+    };
+
+    testAttribute = {
+      expr = md.dump (md.attribute loremSlice);
+      expected = "lorem";
+    };
+
+    testStoreAttribute = {
+      expr = md.dump (md.storeAttribute "firstWord" md.attribute loremSlice);
+      expected = { firstWord = "lorem"; };
     };
   }

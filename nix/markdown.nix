@@ -195,6 +195,12 @@ rec {
   */
   takeUntil = parseUntil:
     takeWhile (searchSlice: failed (parseUntil searchSlice));
+  
+  /*
+  takeRegex - consume characters until the regex does not match
+  */
+  takeRegex = regex:
+    takeWhile (searchSlice: match regex (peekN 1 searchSlice) != null);
 
   ###############
   # combinators #
@@ -293,19 +299,38 @@ rec {
   # lexer #
   #########
 
-  isWhitespace = slice:
-    let nextChar = peekN 1 slice; in
-    nextChar == " " || nextChar == "\t" || nextChar == "\n";
-  
-  lexeme = parser: thenSkip parser (takeWhile isWhitespace);
+  whitespace = takeRegex "[ \t\n]";
 
-  isIdentifier = slice:
-    let nextChar = peekN 1; in
-    match "[a-zA-Z0-9_]" name != null;
+  /*
+  lexeme
+    run the parser and consume any remaining whitespace
+  */  
+  lexeme = parser: thenSkip parser whitespace;
 
-  identifier = lexeme (takeWhile isIdentifier);
+  /*
+  attribute
+    take something that can resonably be an attribute
+  */
+  attribute = lexeme (takeRegex "[a-zA-Z0-9_]");
+
+  /*
+  store in set
+    parse a value and store it in a set
+  */
+  storeAttribute = attribute: parser:
+    fmap (value: { ${attribute} = value; }) parser;
 
   codeFence = tag "```";
+  locateCodeId = skipThen codeFence identifier;
+  storeCodeId = fmap (value: { id = value; }) locateCodeId;
+
+  locateCodeBody = takeUntil codeFence;
+  storeCodeBody = fmap (value: { body = value; }) locateCodeBody;
+
+  tokens = opt [
+    identifiedCodeBlock
+    eof
+  ];
 
   # htmlTag
   # attributePair
