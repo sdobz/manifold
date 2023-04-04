@@ -282,6 +282,16 @@ rec {
 
     mapReduce newRoot operator (tail parsers) newSlice;
 
+  mustConsume = parser: slice:
+    let
+      beforeOffset = elemAt slice 0;
+      result = parser slice;
+      afterOffset = elemAt (elemAt result 0) 0;
+    in
+      if beforeOffset == afterOffset
+        then (if failed result then failWith result else fail) "mustConsume" "failed to consume" slice
+        else result;
+
   /*
   eof
     fails if there is remaining input
@@ -307,7 +317,7 @@ rec {
   attribute
     take something that can resonably be an attribute
   */
-  attribute = lexeme (takeRegex "[a-zA-Z0-9_]");
+  attribute = lexeme (mustConsume (takeRegex "[a-zA-Z0-9_]"));
 
   /*
   store in set
@@ -331,9 +341,9 @@ rec {
   codeFence = tag "```";
   storeCodeId = storeAttribute "id" attribute;
   storeCodeText = storeAttribute "text" (takeUntil codeFence);
-  storeCodeAttrs = combineAttributes [ storeCodeId storeCodeText storeCodeToken  ];
-  storeCodeToken = pure { "token" = "code"; };
-  codeBlockToken = between codeFence codeFence storeCodeAttrs;
+  storeCodeType = pure { "type" = "code"; };
+  storeCodeAttrs = combineAttributes [ storeCodeId storeCodeText storeCodeType  ];
+  codeNode = between codeFence codeFence storeCodeAttrs;
 
   # self closing html tag
 
@@ -344,46 +354,72 @@ rec {
   htmlTagNix = tag "nix";
   htmlTagType = opt [ htmlTagArg htmlTagLet htmlTagNix ];
   # { token = ".." }
-  storeHtmlTagType = lexeme (storeAttribute "token" htmlTagType);
-  # attr=
+  storeHtmlTagType = lexeme (storeAttribute "type" htmlTagType);
+  # `attr=` => {name="attr";}
   equals = lexeme (tag "=");
-  htmlTagAttribute = thenSkip attribute equals;
-  # "value"
+  storeHtmlTagAttribute = storeAttribute "name" (thenSkip attribute equals);
+  # `"value"` => {value="value";}
   quote = tag "\"";
-  htmlTagValue = between quote quote (takeUntil quote);
-  # [ "attr" "value" ]
-  combineHtmlAttributeValue = lexeme (combine [htmlTagAttribute htmlTagValue]);
-  # [ [..] [..] .. ]
-  storeHtmlTagAttributeValues = lexeme (storeAttribute "attributes" (many combineHtmlAttributeValue));
-  # { attributes = [ .. ] }
-  storeHtmlTagAttrs = combineAttributes [ storeHtmlTagType storeHtmlTagAttributeValues ];
+  storeHtmlTagValue = storeAttribute "value" (between quote quote (takeUntil quote));
+  # {name="attr";value="value";}
+  combineHtmlAttributeValue = lexeme (combineAttributes [storeHtmlTagAttribute storeHtmlTagValue]);
+  # {attr="value";..}
+  combineHtmlAttributeValues = fmap listToAttrs (many combineHtmlAttributeValue);
+  storeHtmlTagAttributes = lexeme (storeAttribute "attributes" combineHtmlAttributeValues);
+  # { attributes = { .. } }
+  storeHtmlTagAttrs = combineAttributes [ storeHtmlTagType storeHtmlTagAttributes ];
   htmlTagClose = tag "/>";
 
-  htmlTagToken = between htmlTagOpen htmlTagClose storeHtmlTagAttrs;
+  htmlTagNode = between htmlTagOpen htmlTagClose storeHtmlTagAttrs;
 
   # the rest of the text
-  notPlainText = opt [ codeBlockToken htmlTagToken ];
+  notPlainText = opt [ codeNode htmlTagNode ];
 
-  storePlainTextToken = pure { "token" = "text"; };
-  plainText = bind (takeUntil notPlainText) (text: if text == "" then fail "plainText" "no text matched" else pure text);
+  storePlainTextType = pure { "type" = "text"; };
+  plainText = mustConsume (takeUntil notPlainText);
   storePlainText = storeAttribute "text" plainText;
-  plainTextToken = combineAttributes [ storePlainText storePlainTextToken ];
+  plainTextNode = combineAttributes [ storePlainText storePlainTextType ];
 
   # language syntax
 
-  tokens = opt [
-    plainTextToken
-    htmlTagToken
-    codeBlockToken
+  nodes = opt [
+    plainTextNode
+    htmlTagNode
+    codeNode
   ];
 
-  nixmd = thenSkip (many tokens) eof;
+  nixmd = thenSkip (many nodes) eof;
 
-  /*
-  execution
-  */
-  evalFile = filename: let
+  ###########
+  # runtime #
+  ###########
+
+  filterType = type: ast: filter (node: node.type == type) ast;
+
+  # makeArgs = ast:
+  #   let argsNodes = filterType "arg"
+      
+
+  # makeNix = { args,  }:
+
+  dumpAst = filename: let
     contents = readFile filename;
+    result = nixmd (makeSlice contents);
   in
-    nixmd (makeSlice contents);
+    if failed result
+      then dump result
+    else
+      let ast = elemAt result 1; in
+      toJSON ast;
+  
+  # dumpNix = filename: let
+  #   contents = readFile filename;
+  #   result = nixmd (makeSlice contents);
+  # in
+  #   if failed result
+  #     then dump result
+  #   else
+    
+  #   let
+
 }
