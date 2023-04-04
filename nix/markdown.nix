@@ -320,12 +320,14 @@ rec {
   storeAttribute = attribute: parser:
     fmap (value: { ${attribute} = value; }) parser;
 
-  codeFence = tag "```";
-  locateCodeId = skipThen codeFence identifier;
-  storeCodeId = fmap (value: { id = value; }) locateCodeId;
+  # code fence with id
 
-  locateCodeBody = takeUntil codeFence;
-  storeCodeBody = fmap (value: { body = value; }) locateCodeBody;
+  codeFence = tag "```";
+  storeCodeId = storeAttribute "id" attribute;
+  storeCodeText = storeAttribute "text" (takeUntil codeFence);
+
+  storeCodeAttrs = bind storeCodeId (idSet: (fmap (textSet: idSet // textSet) storeCodeText));
+  codeBlockToken = between codeFence codeFence storeCodeAttrs;
 
   tokens = opt [
     identifiedCodeBlock

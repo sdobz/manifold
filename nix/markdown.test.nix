@@ -273,4 +273,19 @@ in
       expr = md.dump (md.storeAttribute "firstWord" md.attribute loremSlice);
       expected = { firstWord = "lorem"; };
     };
+
+    testCodeBlock = let
+      codeSlice =  md.makeSlice ''
+        ```codeId
+        code body
+        multiline
+        ```
+      '';
+    in {
+      expr = md.dump (md.codeBlockToken codeSlice);
+      expected = {
+        id = "codeId";
+        text = "code body\nmultiline\n";
+      };
+    };
   }
