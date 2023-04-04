@@ -47,16 +47,16 @@ in
     ###########
 
     testFail = let 
-      result = md.fail "parser" loremSlice "is borked";
+      result = md.fail "parser" "is borked" loremSlice;
     in {
       expr = md.dump result;
       expected = "parser[0:11] - is borked";
     };
 
     testFailWith = let
-      result = md.fail "p" loremSlice "1";
+      result = md.fail "p" "1" loremSlice ;
     in {
-      expr = md.dump (md.failWith result "p" loremSlice "2");
+      expr = md.dump (md.failWith result "p" "2" loremSlice );
       expected = "p[0:11] - 1\np[0:11] - 2";
     };
 
@@ -338,5 +338,38 @@ in
     in {
       expr = md.dump (md.htmlTagToken htmlTagSlice);
       expected = { attributes = [ [ "attr1" "value1" ] [ "attr2" "value2" ] ]; token = "nix"; };
+    };
+
+    testPlainTextBeforeTag = let
+      plainTextSlice = md.makeSlice ''
+        plain text
+        <let attr="v1" />
+      '';
+    in {
+      expr = md.dump (md.plainTextToken plainTextSlice);
+      expected = { text = "plain text\n"; token = "text"; };
+    };
+
+    testNixmd = let
+      nixmdSlice = md.makeSlice ''
+      plain text
+      <let tag1="v1" />
+      ```code1
+      some code
+      ```
+      more plain text
+      <let tag2="v2" />
+      '';
+    in {
+        expr = md.dump (md.nixmd nixmdSlice);
+        expected =  [ 
+          { text = "plain text\n"; token = "text"; }
+          { attributes = [ [ "tag1" "v1" ] ]; token = "let"; }
+          { text = "\n"; token = "text"; }
+          { id = "code1"; text = "some code\n"; token = "code"; }
+          { text = "\nmore plain text\n"; token = "text"; }
+          { attributes = [ [ "tag2" "v2" ] ]; token = "let"; }
+          { text = "\n"; token = "text"; }
+        ];
     };
   }

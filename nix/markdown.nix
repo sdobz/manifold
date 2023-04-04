@@ -80,12 +80,12 @@ rec {
   /*
   construct a contextual error
   */
-  fail = name: slice: msg: [ slice null (_: "${name}${loc slice} - ${msg}") ];
+  fail = name: msg: slice: [ slice null (_: "${name}${loc slice} - ${msg}") ];
 
   /*
   failWith adds an err to the end of the err
   */
-  failWith = result: name: slice: msg:
+  failWith = result: name: msg: slice:
     [ slice null (_: "${(elemAt result 2) null}\n${name}${loc slice} - ${msg}") ];
 
   /*
@@ -113,12 +113,12 @@ rec {
   tag = k: slice:
     let tokenLength = stringLength k; in
     if tokenLength > (elemAt slice 1)
-      then fail "tag" slice "expected ${k} got overflow"
+      then fail "tag" "expected ${k} got overflow" slice 
     else
 
     let doesMatch = (peekN tokenLength slice) == k; in
     if !doesMatch
-      then fail "tag" slice "expected ${k} got ${peekN tokenLength slice}"
+      then fail "tag" "expected ${k} got ${peekN tokenLength slice}" slice
     else
 
     [ (dropN tokenLength slice) k ];
@@ -187,7 +187,7 @@ rec {
   bind = parse: f: slice:
     let result = parse slice; in
     if failed result
-      then failWith result "bind" slice "not successful"
+      then failWith result "bind" "not successful" slice
     else
     
     (f (elemAt result 1)) (elemAt result 0);
@@ -229,7 +229,7 @@ rec {
       then opt (tail parsers) slice
     else
 
-    fail "opt" slice "no parser succeeded";
+    fail "opt" "no parser succeeded" slice;
 
   /*
   fold
@@ -271,7 +271,7 @@ rec {
 
     let result = (head parsers) slice; in
     if failed result
-      then failWith result "each" slice "one failed"
+      then failWith result "each" "one failed" slice
     else
 
     let
@@ -288,7 +288,7 @@ rec {
   */
   eof = slice:
     if elemAt slice 1 != 0
-      then fail "eof" slice "expected EOF"
+      then fail "eof" "expected EOF" slice
       else [ slice null ];
 
   #########
@@ -329,10 +329,10 @@ rec {
   # code fence with id
 
   codeFence = tag "```";
-  storeCodeToken = pure { "token" = "code"; };
   storeCodeId = storeAttribute "id" attribute;
   storeCodeText = storeAttribute "text" (takeUntil codeFence);
-  storeCodeAttrs = combineAttributes [ storeCodeToken storeCodeId storeCodeText ];
+  storeCodeAttrs = combineAttributes [ storeCodeId storeCodeText storeCodeToken  ];
+  storeCodeToken = pure { "token" = "code"; };
   codeBlockToken = between codeFence codeFence storeCodeAttrs;
 
   # self closing html tag
@@ -361,11 +361,29 @@ rec {
 
   htmlTagToken = between htmlTagOpen htmlTagClose storeHtmlTagAttrs;
 
+  # the rest of the text
+  notPlainText = opt [ codeBlockToken htmlTagToken ];
+
+  storePlainTextToken = pure { "token" = "text"; };
+  plainText = bind (takeUntil notPlainText) (text: if text == "" then fail "plainText" "no text matched" else pure text);
+  storePlainText = storeAttribute "text" plainText;
+  plainTextToken = combineAttributes [ storePlainText storePlainTextToken ];
+
+  # language syntax
+
+  tokens = opt [
+    plainTextToken
+    htmlTagToken
+    codeBlockToken
+  ];
+
+  nixmd = thenSkip (many tokens) eof;
+
   /*
   execution
   */
   evalFile = filename: let
     contents = readFile filename;
   in
-    stringLength contents;
+    nixmd (makeSlice contents);
 }
