@@ -321,6 +321,11 @@ rec {
   */
   combineAttributes = parsers: mapReduce {} (root: value: root // value) parsers;
 
+  /*
+  combine
+  */
+  combine = parsers: mapReduce [] (root: value: root ++ [value]) parsers;
+
   # code fence with id
 
   codeFence = tag "```";
@@ -330,10 +335,31 @@ rec {
   storeCodeAttrs = combineAttributes [ storeCodeToken storeCodeId storeCodeText ];
   codeBlockToken = between codeFence codeFence storeCodeAttrs;
 
-  tokens = opt [
-    codeBlockToken
-    eof
-  ];
+  # self closing html tag
+
+  htmlTagOpen = tag "<";
+  # allowed tag types
+  htmlTagArg = tag "arg";
+  htmlTagLet = tag "let";
+  htmlTagNix = tag "nix";
+  htmlTagType = opt [ htmlTagArg htmlTagLet htmlTagNix ];
+  # { token = ".." }
+  storeHtmlTagType = lexeme (storeAttribute "token" htmlTagType);
+  # attr=
+  equals = lexeme (tag "=");
+  htmlTagAttribute = thenSkip attribute equals;
+  # "value"
+  quote = tag "\"";
+  htmlTagValue = between quote quote (takeUntil quote);
+  # [ "attr" "value" ]
+  combineHtmlAttributeValue = lexeme (combine [htmlTagAttribute htmlTagValue]);
+  # [ [..] [..] .. ]
+  storeHtmlTagAttributeValues = lexeme (storeAttribute "attributes" (many combineHtmlAttributeValue));
+  # { attributes = [ .. ] }
+  storeHtmlTagAttrs = combineAttributes [ storeHtmlTagType storeHtmlTagAttributeValues ];
+  htmlTagClose = tag "/>";
+
+  htmlTagToken = between htmlTagOpen htmlTagClose storeHtmlTagAttrs;
 
   /*
   execution

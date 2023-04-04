@@ -311,4 +311,32 @@ in
         text = "code body\nmultiline\n";
       };
     };
+
+    testHtmlTagType = let 
+      htmlTagSlice = md.makeSlice "nix";
+    in {
+      expr = md.dump (md.storeHtmlTagType htmlTagSlice);
+      expected = { token = "nix"; };
+    };
+
+    testHtmlAttributeValue = let
+      htmlTagAttributeSlice = md.makeSlice "attr1=\"value1\"";
+    in {
+      expr = md.dump (md.combineHtmlAttributeValue htmlTagAttributeSlice);
+      expected = [ "attr1" "value1" ];
+    };
+
+    testStoreHtmlTagAttributeValues = let
+       htmlTagAttributesSlice = md.makeSlice "attr1=\"value1\" attr2=\"value2\"";
+    in {
+      expr = md.dump (md.storeHtmlTagAttributeValues htmlTagAttributesSlice);
+      expected = { attributes = [ [ "attr1" "value1" ] [ "attr2" "value2" ] ]; };
+    };
+
+    testHtmlTag = let
+      htmlTagSlice = md.makeSlice "<nix attr1=\"value1\" attr2=\"value2\" />";
+    in {
+      expr = md.dump (md.htmlTagToken htmlTagSlice);
+      expected = { attributes = [ [ "attr1" "value1" ] [ "attr2" "value2" ] ]; token = "nix"; };
+    };
   }
