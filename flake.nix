@@ -88,10 +88,10 @@
               pkgs.writeText \"$OUTPUT_FILENAME\" nixmd.out" \
               "$@"
           '';
-        
+        nixmd-all = pkgs.linkFarmFromDrvs  "nixmd-all" [ nixmd nixmd-build nixmd-run ];
       });
 
-      defaultPackage = forAllSystems (system: self.packages."${system}".nixmd);
+      defaultPackage = forAllSystems (system: self.packages."${system}".nixmd-all);
 
       apps = forAllSystems (system: {
         nixmd = {

@@ -10,7 +10,7 @@ let
 
   demoSlice = md.makeSlice (readFile ../SyntaxDemo.md);
 
-  demoAst =  [
+  demoAst =   [
     { text = "plain text\n"; type = "text"; }
     { attributes = [
       { name = "param"; string = "default"; }
@@ -20,17 +20,17 @@ let
     { id = "code"; text = "some code\n"; type = "code"; }
     { text = "\n"; type = "text"; }
     { attributes = [
-      { eval = "code"; name = "binding"; }
-      { eval = "number + 1"; name = "sum"; }
+      { eval = "prev.code"; name = "binding"; }
+      { eval = "prev.number + 1"; name = "sum"; }
     ]; type = "let"; }
     { text = "\n"; type = "text"; }
     { attributes = [
-      { string = "\${final.binding} \${final.sum}"; name = "eval"; }
+      { name = "eval"; string = "\${final.binding} \${toString final.sum}"; }
     ]; type = "nix"; }
     { text = "\n"; type = "text"; }
   ];
 
-  demoRuntime = readFile ../SyntaxDemo.nix;
+  demoRuntime = readFile ../SyntaxDemo.md.nix;
 in
   runTests {
     ##########
@@ -392,7 +392,7 @@ in
     ###########
 
     testDemoRuntime = {
-      expr = md.dumpRuntime ../SyntaxDemo.md;
+      expr = md.dumpRuntime ./runtime.nix ../SyntaxDemo.md;
       expected = demoRuntime;
     };
   }
