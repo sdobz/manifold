@@ -2,23 +2,15 @@
 let
   inherit (pkgs) lib;
   inherit (lib) runTests;
+  inherit (builtins) readFile;
   md = import ./markdown.nix;
 
   loremSlice = [ 0 11 "lorem ipsum" ];
   emipsSlice = [ 3  8 "lorem ipsum" ];
 
-  nixmdSlice = md.makeSlice ''
-    plain text
-    <arg param="default" number='1' />
-    more plain text
-    ```code
-    some code
-    ```
-    <let binding='code' sum='number + 1' />
-    <nix eval="''${binding} ''${sum}" />
-  '';
+  demoSlice = md.makeSlice (readFile ../SyntaxDemo.md);
 
-  nixmdAst =  [
+  demoAst =  [
     { text = "plain text\n"; type = "text"; }
     { attributes = [
       { name = "param"; string = "default"; }
@@ -33,10 +25,12 @@ let
     ]; type = "let"; }
     { text = "\n"; type = "text"; }
     { attributes = [
-      { string = "\${binding} \${sum}"; name = "eval"; }
+      { string = "\${final.binding} \${final.sum}"; name = "eval"; }
     ]; type = "nix"; }
     { text = "\n"; type = "text"; }
   ];
+
+  demoRuntime = readFile ../SyntaxDemo.nix;
 in
   runTests {
     ##########
@@ -388,17 +382,17 @@ in
       expected = { text = "plain text\n"; type = "text"; };
     };
 
-    testNixmd =  {
-        expr = md.dump (md.nixmd nixmdSlice);
-        expected = nixmdAst;
+    testParseDemo =  {
+        expr = md.dump (md.parseNixmd demoSlice);
+        expected = demoAst;
     };
 
     ###########
     # runtime #
     ###########
 
-    testMakeArgs = {
-      expr = md.makeArgs nixmdAst;
-      expected = ''param ? "default", number ? 1'';
+    testDemoRuntime = {
+      expr = md.dumpRuntime ../SyntaxDemo.md;
+      expected = demoRuntime;
     };
   }

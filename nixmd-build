@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+# runs the local ./nix/markdown.nix file instead of the flake version
+SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+
+MARKDOWN_NIX=$(realpath "$SCRIPT_DIR/nix/markdown.nix") \
+RUNTIME_NIX=$(realpath "$SCRIPT_DIR/nix/runtime.nix") \
+nixmd-build "$@"

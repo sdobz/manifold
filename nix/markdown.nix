@@ -390,45 +390,68 @@ rec {
     codeNode
   ];
 
-  nixmd = thenSkip (many nodes) eof;
+  parseNixmd = thenSkip (many nodes) eof;
 
   ###########
   # runtime #
   ###########
 
-  renderNodeAttribute = nodeAttribute:
-    if hasAttr "string" nodeAttribute
-      then ''"${nodeAttribute.string}"''
-      else nodeAttribute.eval;
-
-  makeArgs = ast:
-    let
-      argsNodes = filter (node: node.type == "arg") ast;
-      argsList = foldl' (root: val: root ++ val) [] (map (node: node.attributes) argsNodes);
-      argsStrings = map (nodeAttribute: "${nodeAttribute.name} ? ${renderNodeAttribute nodeAttribute}") argsList;
-    in
-      concatStringsSep ", " argsStrings;
-
-  # makeNix = { args,  }:
-
   dumpAst = filename: let
     contents = readFile filename;
-    result = nixmd (makeSlice contents);
+    result = parseNixmd (makeSlice contents);
   in
     if failed result
       then dump result
     else
       let ast = elemAt result 1; in
       toJSON ast;
-  
-  # dumpNix = filename: let
-  #   contents = readFile filename;
-  #   result = nixmd (makeSlice contents);
-  # in
-  #   if failed result
-  #     then dump result
-  #   else
-    
-  #   let
 
+  renderNodeAttribute = nodeAttribute:
+    if hasAttr "string" nodeAttribute
+      then ''"${nodeAttribute.string}"''
+      else nodeAttribute.eval;
+  
+  overlay = contents: "    (final: prev: {\n${contents}\n    })";
+
+  nodeOverlayContents = {
+    "arg" = node:
+      let
+        argsStrings = map (nodeAttribute: "      ${nodeAttribute.name} = if builtins.hasAttr \"${nodeAttribute.name}\" __args then __args.\${\"${nodeAttribute.name}\"} else ${renderNodeAttribute nodeAttribute};") node.attributes;
+      in
+        concatStringsSep "\n" argsStrings;
+    "let" = node:
+      let
+        letStrings = map (nodeAttribute: "      ${nodeAttribute.name} = ${renderNodeAttribute nodeAttribute};") node.attributes;
+      in
+        concatStringsSep "\n" letStrings;
+    "nix" = node:
+      let
+        evalAttributes = filter (attribute: attribute.name == "eval") node.attributes;
+        evalLines = map (attr: "    ${renderNodeAttribute attr}") evalAttributes;
+      in
+        "      out = prev.out + builtins.concatStringsSep \"\" [\n${concatStringsSep "\n" evalLines }\n  ];";
+    "code" = node: ''      "${node.id}" = '''${node.text}''';'';
+    "text" = node: ''      out = prev.out + '''${node.text}''';'';
+  };
+  
+  overlayNode = node: overlay (nodeOverlayContents.${node.type} node);
+  nodeOverlays = ast: map overlayNode (filter (node: hasAttr node.type nodeOverlayContents) ast);
+
+  nixmdRuntime = runtime: ast:
+    replaceStrings
+      [ "/* overlays */" ]
+      [ ( concatStringsSep "\n" (nodeOverlays ast) ) ]
+      runtime;
+
+  dumpRuntime = runtimePath: filename: let
+    contents = readFile filename;
+    result = parseNixmd (makeSlice contents);
+  in
+    if failed result
+      then dump result
+    else
+    
+    let ast = elemAt result 1; in
+    
+    nixmdRuntime (readFile runtimePath) ast;
 }
