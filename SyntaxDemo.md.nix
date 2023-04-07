@@ -11,28 +11,30 @@ let
   __makeExtensibleWithCustomName = extenderName: rattrs: __fix' (self: (rattrs self) // { ${extenderName} = f: __makeExtensibleWithCustomName extenderName (__extends f rattrs); });
   __overlays = [
     (final: prev: {
-out = prev.out + ''plain text
+out = prev.out + ''# Plain Markdown
 '';
     })
     (final: prev: {
-      param = if builtins.hasAttr "param" __args then __args.${"param"} else "default";
+      stringParam = if builtins.hasAttr "stringParam" __args then __args.${"stringParam"} else "default";
       number = if builtins.hasAttr "number" __args then __args.${"number"} else 1;
     })
     (final: prev: {
 out = prev.out + ''
-more plain text
+plain text
+
 '';
     })
     (final: prev: {
-"code" = ''some code
+"codeBlockId" = ''some code
 '';
     })
     (final: prev: {
 out = prev.out + ''
+
 '';
     })
     (final: prev: {
-      binding = prev.code;
+      binding = prev.codeBlockId;
       sum = prev.number + 1;
     })
     (final: prev: {

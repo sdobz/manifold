@@ -9,27 +9,7 @@ let
   emipsSlice = [ 3  8 "lorem ipsum" ];
 
   demoSlice = md.makeSlice (readFile ../SyntaxDemo.md);
-
-  demoAst =   [
-    { text = "plain text\n"; type = "text"; }
-    { attributes = [
-      { name = "param"; string = "default"; }
-      { eval = "1"; name = "number"; }
-    ]; type = "arg"; }
-    { text = "\nmore plain text\n"; type = "text"; }
-    { id = "code"; text = "some code\n"; type = "code"; }
-    { text = "\n"; type = "text"; }
-    { attributes = [
-      { eval = "prev.code"; name = "binding"; }
-      { eval = "prev.number + 1"; name = "sum"; }
-    ]; type = "let"; }
-    { text = "\n"; type = "text"; }
-    { attributes = [
-      { name = "eval"; string = "\${final.binding} \${toString final.sum}"; }
-    ]; type = "nix"; }
-    { text = "\n"; type = "text"; }
-  ];
-
+  demoAst =  [ { text = "# Plain Markdown\n"; type = "text"; } { attributes = [ { name = "stringParam"; value = "\"default\""; } { name = "number"; value = "1"; } ]; type = "arg"; } { text = "\nplain text\n\n"; type = "text"; } { id = "codeBlockId"; text = "some code\n"; type = "code"; } { text = "\n\n"; type = "text"; } { attributes = [ { name = "binding"; value = "prev.codeBlockId"; } { name = "sum"; value = "prev.number + 1"; } ]; type = "let"; } { text = "\n"; type = "text"; } { attributes = [ { name = "eval"; value = "\"\${final.binding} \${toString final.sum}\""; } ]; type = "nix"; } { text = "\n"; type = "text"; } ];
   demoRuntime = readFile ../SyntaxDemo.md.nix;
 in
   runTests {
@@ -344,38 +324,31 @@ in
       expected = { type = "nix"; };
     };
 
-    testHtmlAttributeString = let
-      htmlTagAttributeSlice = md.makeSlice ''attr="value"'';
-    in {
-      expr = md.dump (md.combineHtmlAttributeValue htmlTagAttributeSlice);
-      expected = { name = "attr"; string = "value"; };
-    };
-
-    testHtmlAttributeEval = let
+    testHtmlAttributeValue = let
       htmlTagAttributeSlice = md.makeSlice ''attr='value''''';
     in {
       expr = md.dump (md.combineHtmlAttributeValue htmlTagAttributeSlice);
-      expected = { name = "attr"; eval = "value"; };
+      expected = { name = "attr"; value = "value"; };
     };
 
     testStoreHtmlTagAttributeValues = let
-       htmlTagAttributesSlice = md.makeSlice ''attr1="value" attr2='value''''';
+       htmlTagAttributesSlice = md.makeSlice ''attr1='value' attr2='"value"''''';
     in {
       expr = md.dump (md.storeHtmlTagAttributes htmlTagAttributesSlice);
-      expected = { attributes = [ { name = "attr1"; string = "value"; } { name = "attr2";  eval = "value"; } ]; };
+      expected = { attributes = [ { name = "attr1"; value = "value"; } { name = "attr2";  value = "\"value\""; } ]; };
     };
 
     testHtmlTag = let
-      htmlTagSlice = md.makeSlice ''<nix attr1="value" attr2='value' />'';
+      htmlTagSlice = md.makeSlice ''<nix attr1='value' attr2='value' />'';
     in {
       expr = md.dump (md.htmlTagNode htmlTagSlice);
-      expected = { attributes = [ { name = "attr1"; string = "value"; } { name = "attr2";  eval = "value"; } ]; type = "nix"; };
+      expected = { attributes = [ { name = "attr1"; value = "value"; } { name = "attr2";  value = "value"; } ]; type = "nix"; };
     };
 
     testPlainTextBeforeTag = let
       plainTextSlice = md.makeSlice ''
         plain text
-        <let attr="v1" />
+        <let attr='v1' />
       '';
     in {
       expr = md.dump (md.plainTextNode plainTextSlice);

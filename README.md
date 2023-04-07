@@ -2,31 +2,37 @@
 
 Literate programming is the upside - down inverse of what a computer expects. It presents the code to a human audience and adds a build step to help the computer figure it out.
 
+Nix can be seen from an operational perspective as a DSL used to write build scripts. It can be fussy and hard to reason about as it must work around all of the historical cruft required to build software.
+
 ## Goal
 
-1. Source markdown files are tangled into an executable form
-2. The source markdown files always remain readable
-3. Build setup requires few dependencies
+Use markdown to describe a literate software development environment by generating nix derivations.
 
-### Syntax / Parsing
+## Syntax / Parsing
 
-The file is parsed once, top to bottom, and a runtime representation is built. The only syntax handled by nixmd is code blocks, and self closing html tags.
-
-The markdown is translated into a nix file which represents a script.
+The file is parsed once, top to bottom, and a runtime representation is built. The only syntax handled by are self closing html tags and identified code blocks
 
 Available tags are:
-* `<nix trace="<expr>" overlay="self: super: { <expr> }" />`
-* `<with <attr>="<default expr>" />`
+* `<nix eval='<expr 1>' eval='<expr 2>' />` - evaluate an expression and include it in the output markdown
+* `<arg <param>='<default expr>' ... />` - add an argument to the derivation
+* `<let <binding>='"string value"' ... />`
 
-Each time a tag is encountered an overlay is created that is passed the state attribute set.
+Code blocks can be started using `` ```codeBlockId ``
 
-Each time a code block is encountered an overlay is created that stores the text of the block.
+### Syntax issues
 
-All overlays are stored in an array and 
+All quotes are single quotes.
 
-### Runtime / Tangling
+Including a string in the expression can be done like so:
+`<let someBinding='"string ${expandion}"' />`
 
+Remaining parser work:
+* Escaping self closing html tags is currently not possible.
+* Escaping single quotes is currently not possible
 
+## Runtime / Tangling
+
+The markdown is translated into a nix derivation, inlining expressions and wrapping each in an overlay.
 
 ### Results / Weaving
 
@@ -60,8 +66,7 @@ source code runtime
 >   "A programmer who cannot explain their ideas clearly in natural
 >    language is incapable of writing readable code." -- Tim Daly
 
-A sufficiecntly lucid explanation of what your program does can be interpreted to be the source code
-
+A sufficiecntly lucid explanation of your programs behavior can be interpreted as the program itself
 
 # Implementation
 
@@ -69,7 +74,7 @@ A sufficiecntly lucid explanation of what your program does can be interpreted t
 
 Implement a subset in nix, enough to establish the build environment
 
-This can compromize full syntax as long as it still achieves identical evaluation
+This can compromize full syntax (escapes etc) as long as it still achieves identical evaluation
 
 It should fit into a single file less than 500 lines
 
@@ -101,7 +106,6 @@ https://doc.rust-lang.org/cargo/reference/build-scripts.html
 
 rerun-if instructions 
 
-
 ## Reference material
 
 * [tangledown.py](https://github.com/rebcabin/tangledown)
@@ -120,6 +124,7 @@ Building a parser (combinator)
 * [parsing the nix AST](https://medium.com/@MrJamesFisher/nix-by-example-a0063a1a4c55)
 * [writing a json parser in haskell](https://hasura.io/blog/parser-combinators-walkthrough/)
 * [Parsec style parser for markdown](https://github.com/tiqwab/md-parser)
+* [rust webassembly what it's all about](https://sdfgeoff.github.io/wasm_minigames/what_its_all_about.html)
 
 # Motivating project
 
@@ -138,11 +143,3 @@ use it to build cad models
 based on sdf surfaces
 
 and derive gcode from it
-
-
-resulting file
-what the resulting file is in the context of the project
-
-idealol:
-https://sdfgeoff.github.io/wasm_minigames/what_its_all_about.html
-

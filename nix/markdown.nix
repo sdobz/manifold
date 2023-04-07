@@ -359,12 +359,9 @@ rec {
   equals = lexeme (tag "=");
   storeHtmlTagAttribute = storeAttribute "name" (thenSkip attribute equals);
   # `"value"` => {value="value";}
-  quoteEval = tag "'";
-  storeHtmlTagEval = storeAttribute "eval" (between quoteEval quoteEval (takeUntil quoteEval));
-  quote = tag "\"";
-  storeHtmlTagString = storeAttribute "string" (between quote quote (takeUntil quote));
-  storeHtmlTagValue = opt [ storeHtmlTagEval storeHtmlTagString ];
-  # {name="attr";string="value";}
+  quote = tag "'";
+  storeHtmlTagValue = storeAttribute "value" (between quote quote (takeUntil quote));
+  # {name="attr";value="value";}
   combineHtmlAttributeValue = lexeme (combineAttributes [storeHtmlTagAttribute storeHtmlTagValue]);
   # [ {..} {..} ]
   storeHtmlTagAttributes = lexeme (storeAttribute "attributes" (many combineHtmlAttributeValue));
@@ -405,29 +402,24 @@ rec {
     else
       let ast = elemAt result 1; in
       toJSON ast;
-
-  renderNodeAttribute = nodeAttribute:
-    if hasAttr "string" nodeAttribute
-      then ''"${nodeAttribute.string}"''
-      else nodeAttribute.eval;
   
   overlay = contents: "    (final: prev: {\n${contents}\n    })";
 
   nodeOverlayContents = {
     "arg" = node:
       let
-        argsStrings = map (nodeAttribute: "      ${nodeAttribute.name} = if builtins.hasAttr \"${nodeAttribute.name}\" __args then __args.\${\"${nodeAttribute.name}\"} else ${renderNodeAttribute nodeAttribute};") node.attributes;
+        argsStrings = map ({name, value}: "      ${name} = if builtins.hasAttr \"${name}\" __args then __args.\${\"${name}\"} else ${value};") node.attributes;
       in
         concatStringsSep "\n" argsStrings;
     "let" = node:
       let
-        letStrings = map (nodeAttribute: "      ${nodeAttribute.name} = ${renderNodeAttribute nodeAttribute};") node.attributes;
+        letStrings = map ({name, value}: "      ${name} = ${value};") node.attributes;
       in
         concatStringsSep "\n" letStrings;
     "nix" = node:
       let
         evalAttributes = filter (attribute: attribute.name == "eval") node.attributes;
-        evalLines = map (attr: "    ${renderNodeAttribute attr}") evalAttributes;
+        evalLines = map (attr: "    ${attr.value}") evalAttributes;
       in
         "      out = prev.out + builtins.concatStringsSep \"\" [\n${concatStringsSep "\n" evalLines }\n  ];";
     "code" = node: ''      "${node.id}" = '''${node.text}''';'';
