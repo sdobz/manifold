@@ -28,14 +28,17 @@
               exit 1
           fi
           CMD="$1"
-          SOURCE_TEXT="$(realpath "$2")"
+          shift
+          SOURCE_TEXT="$(realpath "$1")"
+          shift
           MARKDOWN_NIX="''${MARKDOWN_NIX:-${markdown_nix}}"
           nix-instantiate \
             --read-write-mode \
             --show-trace \
             --eval -E "\
               with import \"$MARKDOWN_NIX\"; \
-              $CMD \"$SOURCE_TEXT\""
+              $CMD \"$SOURCE_TEXT\"" \
+            "$@"
           '';
         nixmd-build = pkgs.writeScriptBin "nixmd-build"
           ''

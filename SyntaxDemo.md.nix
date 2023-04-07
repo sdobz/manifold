@@ -26,8 +26,7 @@ plain text
 '';
     })
     (final: prev: rec {
-codeBlockId = ''some code
-'';
+codeBlockId = ''some code'';
 out = prev.out + ''```codeBlockId
 some code
 ```'';

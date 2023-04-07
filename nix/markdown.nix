@@ -360,11 +360,12 @@ rec {
   # code fence with id
 
   codeFence = tag "```";
+  whitespaceCodeFence = skipThen whitespace codeFence;
   storeCodeId = storeAttribute "id" attribute;
-  storeCode = storeAttribute "code" (takeUntil codeFence);
+  storeCode = storeAttribute "code" (takeUntil whitespaceCodeFence);
   storeCodeType = pure { "type" = "code"; };
   storeCodeAttrs = combineAttributes [ storeCodeId storeCode storeCodeType  ];
-  codeNode = annotateText (between codeFence codeFence storeCodeAttrs);
+  codeNode = annotateText (between codeFence whitespaceCodeFence storeCodeAttrs);
 
   # self closing html tag
 

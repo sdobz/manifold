@@ -9,7 +9,7 @@ let
   emipsSlice = [ 3  8 "lorem ipsum" ];
 
   demoSlice = md.makeSlice (readFile ../SyntaxDemo.md);
-  demoAst =  [ { text = "# Plain Markdown\n"; type = "text"; } { attributes = [ { name = "stringParam"; value = "\"default\""; } { name = "number"; value = "1"; } ]; type = "arg"; } { text = "\nplain text\n\n"; type = "text"; } { code = "some code\n"; id = "codeBlockId"; text = "```codeBlockId\nsome code\n```"; type = "code"; } { text = "\n\n"; type = "text"; } { attributes = [ { name = "binding"; value = "prev.codeBlockId"; } { name = "sum"; value = "prev.number + 1"; } ]; type = "let"; } { text = "\n"; type = "text"; } { attributes = [ { name = "eval"; value = "\"\${final.binding} \${toString final.sum}\""; } ]; type = "nix"; } { text = "\n"; type = "text"; } ];
+  demoAst =  [ { text = "# Plain Markdown\n"; type = "text"; } { attributes = [ { name = "stringParam"; value = "\"default\""; } { name = "number"; value = "1"; } ]; type = "arg"; } { text = "\nplain text\n\n"; type = "text"; } { code = "some code"; id = "codeBlockId"; text = "```codeBlockId\nsome code\n```"; type = "code"; } { text = "\n\n"; type = "text"; } { attributes = [ { name = "binding"; value = "prev.codeBlockId"; } { name = "sum"; value = "prev.number + 1"; } ]; type = "let"; } { text = "\n"; type = "text"; } { attributes = [ { name = "eval"; value = "\"\${final.binding} \${toString final.sum}\""; } ]; type = "nix"; } { text = "\n"; type = "text"; } ];
   demoRuntime = readFile ../SyntaxDemo.md.nix;
 in
   runTests {
@@ -322,7 +322,7 @@ in
       expected = {
         type = "code";
         id = "codeId";
-        code = "code body\nmultiline\n";
+        code = "code body\nmultiline";
         text = "```codeId\ncode body\nmultiline\n```";
       };
     };
