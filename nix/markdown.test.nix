@@ -9,7 +9,7 @@ let
   emipsSlice = [ 3  8 "lorem ipsum" ];
 
   demoSlice = md.makeSlice (readFile ../SyntaxDemo.md);
-  demoAst =  [ { text = "# Plain Markdown\n"; type = "text"; } { attributes = [ { name = "stringParam"; value = "\"default\""; } { name = "number"; value = "1"; } ]; type = "arg"; } { text = "\nplain text\n\n"; type = "text"; } { id = "codeBlockId"; text = "some code\n"; type = "code"; } { text = "\n\n"; type = "text"; } { attributes = [ { name = "binding"; value = "prev.codeBlockId"; } { name = "sum"; value = "prev.number + 1"; } ]; type = "let"; } { text = "\n"; type = "text"; } { attributes = [ { name = "eval"; value = "\"\${final.binding} \${toString final.sum}\""; } ]; type = "nix"; } { text = "\n"; type = "text"; } ];
+  demoAst =  [ { text = "# Plain Markdown\n"; type = "text"; } { attributes = [ { name = "stringParam"; value = "\"default\""; } { name = "number"; value = "1"; } ]; type = "arg"; } { text = "\nplain text\n\n"; type = "text"; } { code = "some code\n"; id = "codeBlockId"; text = "```codeBlockId\nsome code\n```"; type = "code"; } { text = "\n\n"; type = "text"; } { attributes = [ { name = "binding"; value = "prev.codeBlockId"; } { name = "sum"; value = "prev.number + 1"; } ]; type = "let"; } { text = "\n"; type = "text"; } { attributes = [ { name = "eval"; value = "\"\${final.binding} \${toString final.sum}\""; } ]; type = "nix"; } { text = "\n"; type = "text"; } ];
   demoRuntime = readFile ../SyntaxDemo.md.nix;
 in
   runTests {
@@ -289,6 +289,15 @@ in
       expected = { firstWord = "lorem"; };
     };
 
+    testAnnotateText = let
+      lorem = md.lexeme (md.tag "lorem");
+      ipsum = md.tag "ipsum";
+      parser = md.annotateText (md.storeAttribute "lorem" (md.thenSkip lorem ipsum));
+    in {
+      expr = md.dump (parser loremSlice);
+      expected = { lorem = "lorem"; text = "lorem ipsum"; };
+    };
+
     testCombineAttributes = let
       storeFirst = md.storeAttribute "first" md.attribute;
       storeSecond = md.storeAttribute "second" md.attribute;
@@ -313,7 +322,8 @@ in
       expected = {
         type = "code";
         id = "codeId";
-        text = "code body\nmultiline\n";
+        code = "code body\nmultiline\n";
+        text = "```codeId\ncode body\nmultiline\n```";
       };
     };
 

@@ -325,6 +325,27 @@ rec {
   */
   storeAttribute = attribute: parser:
     fmap (value: { ${attribute} = value; }) parser;
+  
+  /*
+  annotateText
+    assuming value is an attrSet add "text" to the value
+  */
+  annotateText = parser: slice:
+    let
+      startOffset = elemAt slice 0;
+      result = parser slice;
+    in
+      if failed result
+        then result
+      else
+
+      let
+        remaining = elemAt result 0;
+        endOffset = elemAt remaining 0;
+        text = peekN (endOffset - startOffset) slice;
+      in
+
+      [ remaining ((elemAt result 1) // { text = text; }) ];
 
   /*
   assuming each parser returns an attribute set combine all of the results
@@ -340,10 +361,10 @@ rec {
 
   codeFence = tag "```";
   storeCodeId = storeAttribute "id" attribute;
-  storeCodeText = storeAttribute "text" (takeUntil codeFence);
+  storeCode = storeAttribute "code" (takeUntil codeFence);
   storeCodeType = pure { "type" = "code"; };
-  storeCodeAttrs = combineAttributes [ storeCodeId storeCodeText storeCodeType  ];
-  codeNode = between codeFence codeFence storeCodeAttrs;
+  storeCodeAttrs = combineAttributes [ storeCodeId storeCode storeCodeType  ];
+  codeNode = annotateText (between codeFence codeFence storeCodeAttrs);
 
   # self closing html tag
 
@@ -403,7 +424,7 @@ rec {
       let ast = elemAt result 1; in
       toJSON ast;
   
-  overlay = contents: "    (final: prev: {\n${contents}\n    })";
+  overlay = contents: "    (final: prev: rec {\n${contents}\n    })";
 
   nodeOverlayContents = {
     "arg" = node:
@@ -422,7 +443,7 @@ rec {
         evalLines = map (attr: "    ${attr.value}") evalAttributes;
       in
         "      out = prev.out + builtins.concatStringsSep \"\" [\n${concatStringsSep "\n" evalLines }\n  ];";
-    "code" = node: ''      "${node.id}" = '''${node.text}''';'';
+    "code" = node: ''      ${node.id} = '''${node.code}''';''\n      out = prev.out + '''${node.text}''';'';
     "text" = node: ''      out = prev.out + '''${node.text}''';'';
   };
   
