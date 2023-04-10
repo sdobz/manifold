@@ -12,46 +12,36 @@ let nixmd = rec {
   makeExtensibleWithCustomName = extenderName: rattrs: fix' (self: (rattrs self) // { ${extenderName} = f: makeExtensibleWithCustomName extenderName (extends f rattrs); });
   overlays = [
     (final: prev: rec {
-out = prev.out + ''# Plain Markdown
-'';
+      out = prev.out + "# Plain Markdown\n";
     })
     (final: prev: rec {
       stringParam = if builtins.hasAttr "stringParam" __args then __args.${"stringParam"} else "default";
       number = if builtins.hasAttr "number" __args then __args.${"number"} else 1;
     })
     (final: prev: rec {
-out = prev.out + ''
-plain text
-
-'';
+      out = prev.out + "\nplain text\n\n";
     })
     (final: prev: rec {
-codeBlockId = ''some code'';
-out = prev.out + ''```codeBlockId
-some code
-```'';
+      codeBlockId = "some code";
+      out = prev.out + "```codeBlockId\nsome code\n```";
     })
     (final: prev: rec {
-out = prev.out + ''
-
-'';
+      out = prev.out + "\n\n";
     })
     (final: prev: rec {
       binding = prev.codeBlockId;
       sum = prev.number + 1;
     })
     (final: prev: rec {
-out = prev.out + ''
-'';
+      out = prev.out + "\n";
     })
     (final: prev: rec {
       out = prev.out + builtins.concatStringsSep "" [
-    ("${final.binding} ${toString final.sum}")
-  ];
+        ("${final.binding} ${toString final.sum}")
+      ];
     })
     (final: prev: rec {
-out = prev.out + ''
-'';
+      out = prev.out + "\n";
     })
   ];
   extensions = composeManyExtensions overlays;

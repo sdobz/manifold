@@ -424,6 +424,8 @@ rec {
     else
       let ast = elemAt result 1; in
       toJSON ast;
+
+  escape = replaceStrings [ "\n" "\r" "\t" "\"" ] [ "\\n" "\\r" "\\t" "\\\"" ];
   
   overlay = contents: "    (final: prev: rec {\n${contents}\n    })";
 
@@ -445,15 +447,15 @@ rec {
       in
         (if length printAttributes > 0
           then
-            let printLines = map (attr: "    (${attr.value})") printAttributes;
-            in "      out = prev.out + builtins.concatStringsSep \"\" [\n${concatStringsSep "\n" printLines }\n  ];"
+            let printLines = map (attr: "        (${attr.value})") printAttributes;
+            in "      out = prev.out + builtins.concatStringsSep \"\" [\n${concatStringsSep "\n" printLines }\n      ];"
         else "") +
         (if length evalAttributes > 0
           then "      " + (concatStringsSep "\n      " (map ({value, name}: "${value};") evalAttributes))
         else "");
 
-    "code" = node: ''      ${node.id} = '''${node.code}''';''\n      out = prev.out + '''${node.text}''';'';
-    "text" = node: ''      out = prev.out + '''${node.text}''';'';
+    "code" = node: "      ${node.id} = \"${escape node.code}\";\n      out = prev.out + \"${escape node.text}\";";
+    "text" = node: "      out = prev.out + \"${escape node.text}\";";
   };
   
   overlayNode = node: overlay (nodeOverlayContents.${node.type} node);

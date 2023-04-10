@@ -12,59 +12,39 @@ let nixmd = rec {
   makeExtensibleWithCustomName = extenderName: rattrs: fix' (self: (rattrs self) // { ${extenderName} = f: makeExtensibleWithCustomName extenderName (extends f rattrs); });
   overlays = [
     (final: prev: rec {
-out = prev.out + ''This example shows how to capture the stdout of a bash script
-
-'';
+      out = prev.out + "This example shows how to capture the stdout of a bash script\n\n";
     })
     (final: prev: rec {
       pkgs = if builtins.hasAttr "pkgs" __args then __args.${"pkgs"} else import <nixpkgs> {};
     })
     (final: prev: rec {
-out = prev.out + ''
-
-First define the shell script
-
-'';
+      out = prev.out + "\n\nFirst define the shell script\n\n";
     })
     (final: prev: rec {
-bash = ''hello'';
-out = prev.out + ''```bash
-hello
-```'';
+      bash = "hello";
+      out = prev.out + "```bash\nhello\n```";
     })
     (final: prev: rec {
-out = prev.out + ''
-
-Then define a derivation using the script value as source text
-
-'';
+      out = prev.out + "\n\nThen define a derivation using the script value as source text\n\n";
     })
     (final: prev: rec {
       demoScript = prev.pkgs.writeShellApplication {
     name="demoScript";
     text=prev.bash;
     runtimeInputs=[prev.pkgs.hello];
-    checkPhase=null;
+    checkPhase="";
 };
     })
     (final: prev: rec {
-out = prev.out + ''
-
-```
-'';
+      out = prev.out + "\n\n```\n";
     })
     (final: prev: rec {
       out = prev.out + builtins.concatStringsSep "" [
-    (prev.demoScript)
-  ];
+        (prev.demoScript)
+      ];
     })
     (final: prev: rec {
-out = prev.out + ''
-```
-
-Next define a builder that captures the stdout of that script into an importable file
-
-'';
+      out = prev.out + "\n```\n\nNext define a builder that captures the stdout of that script into an importable file\n\n";
     })
     (final: prev: rec {
       capturingBuilder = prev.pkgs.runCommand
@@ -73,34 +53,23 @@ Next define a builder that captures the stdout of that script into an importable
 ;
     })
     (final: prev: rec {
-out = prev.out + ''
-
-```
-'';
+      out = prev.out + "\n\n```\n";
     })
     (final: prev: rec {
       out = prev.out + builtins.concatStringsSep "" [
-    (prev.capturingBuilder)
-  ];
+        (prev.capturingBuilder)
+      ];
     })
     (final: prev: rec {
-out = prev.out + ''
-```
-
-Finally that file is imported, showing the scripts output
-
-```
-'';
+      out = prev.out + "\n```\n\nFinally that file is imported, showing the scripts output\n\n```\n";
     })
     (final: prev: rec {
       out = prev.out + builtins.concatStringsSep "" [
-    (import (prev.capturingBuilder))
-  ];
+        (import (prev.capturingBuilder))
+      ];
     })
     (final: prev: rec {
-out = prev.out + ''
-```
-'';
+      out = prev.out + "\n```\n";
     })
   ];
   extensions = composeManyExtensions overlays;

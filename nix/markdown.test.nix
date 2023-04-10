@@ -364,6 +364,21 @@ in
       expected = { text = "plain text\n"; type = "text"; };
     };
 
+    testTagPreservesNewline = let
+      newlineSlice = md.makeSlice ''
+        text
+        <nix />
+        text
+      '';
+    in {
+      expr = md.dump (md.parseNixmd newlineSlice);
+      expected = [
+        { text = "text\n"; type = "text"; }
+        { attributes = [ ]; type = "nix"; }
+        { text = "\ntext\n"; type = "text"; }
+      ];
+    };
+
     ###########
     # runtime #
     ###########

@@ -14,7 +14,7 @@ Then define a derivation using the script value as source text
     name="demoScript";
     text=prev.bash;
     runtimeInputs=[prev.pkgs.hello];
-    checkPhase=null;
+    checkPhase="";
 }' />
 
 ```
