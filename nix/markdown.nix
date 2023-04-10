@@ -425,7 +425,7 @@ rec {
       let ast = elemAt result 1; in
       toJSON ast;
 
-  escape = replaceStrings [ "\n" "\r" "\t" "\"" ] [ "\\n" "\\r" "\\t" "\\\"" ];
+  escape = replaceStrings [ "\n" "\r" "\t" "\\" "\"" "\${" ] [ "\\n" "\\r" "\\t" "\\\\" "\\\"" "\\\${" ];
   
   overlay = contents: "    (final: prev: with final.global; rec {\n${contents}\n    })";
 
