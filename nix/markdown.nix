@@ -440,10 +440,18 @@ rec {
         concatStringsSep "\n" letStrings;
     "nix" = node:
       let
+        printAttributes = filter (attribute: attribute.name == "print") node.attributes;
         evalAttributes = filter (attribute: attribute.name == "eval") node.attributes;
-        evalLines = map (attr: "    ${attr.value}") evalAttributes;
       in
-        "      out = prev.out + builtins.concatStringsSep \"\" [\n${concatStringsSep "\n" evalLines }\n  ];";
+        (if length printAttributes > 0
+          then
+            let printLines = map (attr: "    (${attr.value})") printAttributes;
+            in "      out = prev.out + builtins.concatStringsSep \"\" [\n${concatStringsSep "\n" printLines }\n  ];"
+        else "") +
+        (if length evalAttributes > 0
+          then "      " + (concatStringsSep "\n      " (map ({value, name}: "${value};") evalAttributes))
+        else "");
+
     "code" = node: ''      ${node.id} = '''${node.code}''';''\n      out = prev.out + '''${node.text}''';'';
     "text" = node: ''      out = prev.out + '''${node.text}''';'';
   };

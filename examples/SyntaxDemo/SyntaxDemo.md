@@ -7,4 +7,4 @@ some code
 ```
 
 <let binding='prev.codeBlockId' sum='prev.number + 1' />
-<nix eval='"${final.binding} ${toString final.sum}"' />
+<nix print='"${final.binding} ${toString final.sum}"' />

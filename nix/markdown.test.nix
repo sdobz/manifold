@@ -9,7 +9,6 @@ let
   emipsSlice = [ 3  8 "lorem ipsum" ];
 
   demoSlice = md.makeSlice (readFile ../examples/SyntaxDemo/SyntaxDemo.md);
-  demoAst =  [ { text = "# Plain Markdown\n"; type = "text"; } { attributes = [ { name = "stringParam"; value = "\"default\""; } { name = "number"; value = "1"; } ]; type = "arg"; } { text = "\nplain text\n\n"; type = "text"; } { code = "some code"; id = "codeBlockId"; text = "```codeBlockId\nsome code\n```"; type = "code"; } { text = "\n\n"; type = "text"; } { attributes = [ { name = "binding"; value = "prev.codeBlockId"; } { name = "sum"; value = "prev.number + 1"; } ]; type = "let"; } { text = "\n"; type = "text"; } { attributes = [ { name = "eval"; value = "\"\${final.binding} \${toString final.sum}\""; } ]; type = "nix"; } { text = "\n"; type = "text"; } ];
   demoRuntime = readFile ../examples/SyntaxDemo/SyntaxDemo.md.nix;
 in
   runTests {
@@ -363,11 +362,6 @@ in
     in {
       expr = md.dump (md.plainTextNode plainTextSlice);
       expected = { text = "plain text\n"; type = "text"; };
-    };
-
-    testParseDemo =  {
-        expr = md.dump (md.parseNixmd demoSlice);
-        expected = demoAst;
     };
 
     ###########

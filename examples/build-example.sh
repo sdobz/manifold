@@ -13,5 +13,9 @@ buildExample() {
     cp "$(nixmd-run $exampleName.md.nix --no-link)" $exampleName.md.nix.md
 }
 
-export -f buildExample
-find "$SCRIPT_DIR/" -maxdepth 1 -mindepth 1 -type d -exec bash -c 'buildExample "{}"' \;
+if [ -z "${1+xxx}" ]; then
+    export -f buildExample
+    find "$SCRIPT_DIR/" -maxdepth 1 -mindepth 1 -type d -exec bash -c 'buildExample "{}"' \;
+else
+    buildExample "$SCRIPT_DIR/$1"
+fi

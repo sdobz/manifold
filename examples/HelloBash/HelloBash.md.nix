@@ -12,45 +12,94 @@ let nixmd = rec {
   makeExtensibleWithCustomName = extenderName: rattrs: fix' (self: (rattrs self) // { ${extenderName} = f: makeExtensibleWithCustomName extenderName (extends f rattrs); });
   overlays = [
     (final: prev: rec {
-out = prev.out + ''# Plain Markdown
-'';
-    })
-    (final: prev: rec {
-      stringParam = if builtins.hasAttr "stringParam" __args then __args.${"stringParam"} else "default";
-      number = if builtins.hasAttr "number" __args then __args.${"number"} else 1;
-    })
-    (final: prev: rec {
-out = prev.out + ''
-plain text
+out = prev.out + ''This example shows how to capture the stdout of a bash script
 
 '';
     })
     (final: prev: rec {
-codeBlockId = ''some code'';
-out = prev.out + ''```codeBlockId
-some code
+      pkgs = if builtins.hasAttr "pkgs" __args then __args.${"pkgs"} else import <nixpkgs> {};
+    })
+    (final: prev: rec {
+out = prev.out + ''
+
+First define the shell script
+
+'';
+    })
+    (final: prev: rec {
+bash = ''hello'';
+out = prev.out + ''```bash
+hello
 ```'';
     })
     (final: prev: rec {
 out = prev.out + ''
 
+Then define a derivation using the script value as source text
+
 '';
     })
     (final: prev: rec {
-      binding = prev.codeBlockId;
-      sum = prev.number + 1;
+      demoScript = prev.pkgs.writeShellApplication {
+    name="demoScript";
+    text=prev.bash;
+    runtimeInputs=[prev.pkgs.hello];
+    checkPhase=null;
+};
     })
     (final: prev: rec {
 out = prev.out + ''
+
+```
 '';
     })
     (final: prev: rec {
       out = prev.out + builtins.concatStringsSep "" [
-    ("${final.binding} ${toString final.sum}")
+    (prev.demoScript)
   ];
     })
     (final: prev: rec {
 out = prev.out + ''
+```
+
+Next define a builder that captures the stdout of that script into an importable file
+
+'';
+    })
+    (final: prev: rec {
+      capturingBuilder = prev.pkgs.runCommand
+    "capturingBuilder" {}
+    "echo -n \\\" > $out; ${prev.demoScript}/bin/demoScript >> $out; echo -n \\\" >> $out"
+;
+    })
+    (final: prev: rec {
+out = prev.out + ''
+
+```
+'';
+    })
+    (final: prev: rec {
+      out = prev.out + builtins.concatStringsSep "" [
+    (prev.capturingBuilder)
+  ];
+    })
+    (final: prev: rec {
+out = prev.out + ''
+```
+
+Finally that file is imported, showing the scripts output
+
+```
+'';
+    })
+    (final: prev: rec {
+      out = prev.out + builtins.concatStringsSep "" [
+    (import (prev.capturingBuilder))
+  ];
+    })
+    (final: prev: rec {
+out = prev.out + ''
+```
 '';
     })
   ];
