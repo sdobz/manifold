@@ -371,10 +371,10 @@ rec {
 
   htmlTagOpen = tag "<";
   # allowed tag types
-  htmlTagArg = tag "arg";
+  htmlTagWith = tag "with";
   htmlTagLet = tag "let";
   htmlTagNix = tag "nix";
-  htmlTagType = opt [ htmlTagArg htmlTagLet htmlTagNix ];
+  htmlTagType = opt [ htmlTagWith htmlTagLet htmlTagNix ];
   # { token = ".." }
   storeHtmlTagType = lexeme (storeAttribute "type" htmlTagType);
   # `attr=` => {name="attr";}
@@ -427,14 +427,14 @@ rec {
 
   escape = replaceStrings [ "\n" "\r" "\t" "\"" ] [ "\\n" "\\r" "\\t" "\\\"" ];
   
-  overlay = contents: "    (final: prev: rec {\n${contents}\n    })";
+  overlay = contents: "    (final: prev: with final.global; rec {\n${contents}\n    })";
 
   nodeOverlayContents = {
-    "arg" = node:
+    "with" = node:
       let
-        argsStrings = map ({name, value}: "      ${name} = if builtins.hasAttr \"${name}\" __args then __args.\${\"${name}\"} else ${value};") node.attributes;
+        withStrings = map ({name, value}: "      global.${name} = if builtins.hasAttr \"${name}\" __args then __args.\${\"${name}\"} else ${value};") node.attributes;
       in
-        concatStringsSep "\n" argsStrings;
+        concatStringsSep "\n" withStrings;
     "let" = node:
       let
         letStrings = map ({name, value}: "      ${name} = ${value};") node.attributes;

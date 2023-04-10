@@ -14,7 +14,7 @@ let nixmd = rec {
 /* overlays */
   ];
   extensions = composeManyExtensions overlays;
-  initialSelf = { out = ""; };
+  initialSelf = { out = ""; global = {}; };
   finalSelf = makeExtensible (extends extensions (self: initialSelf));
 }; in
   nixmd.finalSelf

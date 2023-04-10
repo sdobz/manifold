@@ -11,69 +11,69 @@ let nixmd = rec {
   makeExtensible = makeExtensibleWithCustomName "extend";
   makeExtensibleWithCustomName = extenderName: rattrs: fix' (self: (rattrs self) // { ${extenderName} = f: makeExtensibleWithCustomName extenderName (extends f rattrs); });
   overlays = [
-    (final: prev: rec {
+    (final: prev: with final.global; rec {
       out = prev.out + "This example shows how to capture the stdout of a bash script\n\n";
     })
-    (final: prev: rec {
-      pkgs = if builtins.hasAttr "pkgs" __args then __args.${"pkgs"} else import <nixpkgs> {};
+    (final: prev: with final.global; rec {
+      global.pkgs = if builtins.hasAttr "pkgs" __args then __args.${"pkgs"} else import <nixpkgs> {};
     })
-    (final: prev: rec {
+    (final: prev: with final.global; rec {
       out = prev.out + "\n\nFirst define the shell script\n\n";
     })
-    (final: prev: rec {
+    (final: prev: with final.global; rec {
       bash = "hello";
       out = prev.out + "```bash\nhello\n```";
     })
-    (final: prev: rec {
+    (final: prev: with final.global; rec {
       out = prev.out + "\n\nThen define a derivation using the script value as source text\n\n";
     })
-    (final: prev: rec {
-      demoScript = prev.pkgs.writeShellApplication {
+    (final: prev: with final.global; rec {
+      demoScript = pkgs.writeShellApplication {
     name="demoScript";
     text=prev.bash;
-    runtimeInputs=[prev.pkgs.hello];
+    runtimeInputs=[pkgs.hello];
     checkPhase="";
 };
     })
-    (final: prev: rec {
+    (final: prev: with final.global; rec {
       out = prev.out + "\n\n```\n";
     })
-    (final: prev: rec {
+    (final: prev: with final.global; rec {
       out = prev.out + builtins.concatStringsSep "" [
         (prev.demoScript)
       ];
     })
-    (final: prev: rec {
+    (final: prev: with final.global; rec {
       out = prev.out + "\n```\n\nNext define a builder that captures the stdout of that script into an importable file\n\n";
     })
-    (final: prev: rec {
-      capturingBuilder = prev.pkgs.runCommand
+    (final: prev: with final.global; rec {
+      capturingBuilder = pkgs.runCommand
     "capturingBuilder" {}
     "echo -n \\\" > $out; ${prev.demoScript}/bin/demoScript >> $out; echo -n \\\" >> $out"
 ;
     })
-    (final: prev: rec {
+    (final: prev: with final.global; rec {
       out = prev.out + "\n\n```\n";
     })
-    (final: prev: rec {
+    (final: prev: with final.global; rec {
       out = prev.out + builtins.concatStringsSep "" [
         (prev.capturingBuilder)
       ];
     })
-    (final: prev: rec {
+    (final: prev: with final.global; rec {
       out = prev.out + "\n```\n\nFinally that file is imported, showing the scripts output\n\n```\n";
     })
-    (final: prev: rec {
+    (final: prev: with final.global; rec {
       out = prev.out + builtins.concatStringsSep "" [
         (import (prev.capturingBuilder))
       ];
     })
-    (final: prev: rec {
+    (final: prev: with final.global; rec {
       out = prev.out + "\n```\n";
     })
   ];
   extensions = composeManyExtensions overlays;
-  initialSelf = { out = ""; };
+  initialSelf = { out = ""; global = {}; };
   finalSelf = makeExtensible (extends extensions (self: initialSelf));
 }; in
   nixmd.finalSelf

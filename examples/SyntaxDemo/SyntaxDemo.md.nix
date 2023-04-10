@@ -11,41 +11,41 @@ let nixmd = rec {
   makeExtensible = makeExtensibleWithCustomName "extend";
   makeExtensibleWithCustomName = extenderName: rattrs: fix' (self: (rattrs self) // { ${extenderName} = f: makeExtensibleWithCustomName extenderName (extends f rattrs); });
   overlays = [
-    (final: prev: rec {
+    (final: prev: with final.global; rec {
       out = prev.out + "# Plain Markdown\n";
     })
-    (final: prev: rec {
-      stringParam = if builtins.hasAttr "stringParam" __args then __args.${"stringParam"} else "default";
-      number = if builtins.hasAttr "number" __args then __args.${"number"} else 1;
+    (final: prev: with final.global; rec {
+      global.stringParam = if builtins.hasAttr "stringParam" __args then __args.${"stringParam"} else "default";
+      global.number = if builtins.hasAttr "number" __args then __args.${"number"} else 1;
     })
-    (final: prev: rec {
+    (final: prev: with final.global; rec {
       out = prev.out + "\nplain text\n\n";
     })
-    (final: prev: rec {
+    (final: prev: with final.global; rec {
       codeBlockId = "some code";
       out = prev.out + "```codeBlockId\nsome code\n```";
     })
-    (final: prev: rec {
+    (final: prev: with final.global; rec {
       out = prev.out + "\n\n";
     })
-    (final: prev: rec {
+    (final: prev: with final.global; rec {
       binding = prev.codeBlockId;
-      sum = prev.number + 1;
+      sum = number + 1;
     })
-    (final: prev: rec {
+    (final: prev: with final.global; rec {
       out = prev.out + "\n";
     })
-    (final: prev: rec {
+    (final: prev: with final.global; rec {
       out = prev.out + builtins.concatStringsSep "" [
-        ("${final.binding} ${toString final.sum}")
+        ("${stringParam} ${final.binding} ${toString final.sum}")
       ];
     })
-    (final: prev: rec {
+    (final: prev: with final.global; rec {
       out = prev.out + "\n";
     })
   ];
   extensions = composeManyExtensions overlays;
-  initialSelf = { out = ""; };
+  initialSelf = { out = ""; global = {}; };
   finalSelf = makeExtensible (extends extensions (self: initialSelf));
 }; in
   nixmd.finalSelf
