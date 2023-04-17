@@ -70,6 +70,7 @@ let nixmd = rec {
       ];
     })
 
+
     (final: prev: with final.global; rec {
       out = prev.out + builtins.concatStringsSep "" [
           "\n```\n\nNext define a builder that captures the stdout of that script into an importable file\n\n"
@@ -101,6 +102,7 @@ let nixmd = rec {
       ];
     })
 
+
     (final: prev: with final.global; rec {
       out = prev.out + builtins.concatStringsSep "" [
           "\n```\n\nFinally that file is imported, showing the scripts output\n\n```\n"
@@ -115,6 +117,7 @@ let nixmd = rec {
           "<!-- /io -->"
       ];
     })
+
 
     (final: prev: with final.global; rec {
       out = prev.out + builtins.concatStringsSep "" [

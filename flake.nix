@@ -12,86 +12,21 @@
         pkgs = self.legacyPackages."${system}";
         markdown_nix = ./bootstrap/markdown.nix;
         runtime_nix = ./bootstrap/runtime.nix;
+        nixmd_sh = ./bootstrap/nixmd.sh;
         runtimeInputs = [ pkgs.nix ];
       in rec {
         nixmd = pkgs.writeScriptBin "nixmd"
           ''
           #!${pkgs.runtimeShell}
-          set -o errexit
-          set -o nounset
-          set -o pipefail
 
           export PATH="${pkgs.lib.makeBinPath runtimeInputs}:$PATH"
+          export MARKDOWN_NIX="${markdown_nix}"
+          export RUNTIME_NIX="${runtime_nix}"
+          export NIXMD_SH="${nixmd_sh}"
 
-          if  [ $# -lt 2 ] || [ ! -f "$2" ]; then
-              echo "Usage: $0 <cmd> <somefile.md>"
-              exit 1
-          fi
-          CMD="$1"
-          shift
-          SOURCE_TEXT="$(realpath "$1")"
-          shift
-          MARKDOWN_NIX="''${MARKDOWN_NIX:-${markdown_nix}}"
-          nix-instantiate \
-            --read-write-mode \
-            --show-trace \
-            --eval -E "\
-              with import \"$MARKDOWN_NIX\"; \
-              $CMD \"$SOURCE_TEXT\"" \
-            "$@"
+          ${pkgs.runtimeShell} "$NIXMD_SH" "$@"
           '';
-        nixmd-build = pkgs.writeScriptBin "nixmd-build"
-          ''
-          #!${pkgs.runtimeShell}
-          set -o errexit
-          set -o nounset
-          set -o pipefail
-
-          export PATH="${pkgs.lib.makeBinPath runtimeInputs}:$PATH"
-
-          if  [ $# -lt 1 ] || [ ! -f "$1" ]; then
-              echo "Usage: $0 <somefile.md>"
-              exit 1
-          fi
-          SOURCE_TEXT="$(realpath "$1")"
-          shift
-          OUTPUT_FILENAME="$(basename "$SOURCE_TEXT").nix"
-          MARKDOWN_NIX="''${MARKDOWN_NIX:-${markdown_nix}}"
-          RUNTIME_NIX="''${RUNTIME_NIX:-${runtime_nix}}"
-          nix-build \
-            --impure \
-            --expr "\
-              let md = import \"$MARKDOWN_NIX\"; \
-                  pkgs = import <nixpkgs> {}; in \
-              pkgs.writeText \"$OUTPUT_FILENAME\" (md.dumpRuntime \"$RUNTIME_NIX\" \"$SOURCE_TEXT\")" \
-               "$@"
-          '';
-        nixmd-run = pkgs.writeScriptBin "nixmd-run"
-          ''
-          #!${pkgs.runtimeShell}
-          set -o errexit
-          set -o nounset
-          set -o pipefail
-
-          export PATH="${pkgs.lib.makeBinPath runtimeInputs}:$PATH"
-
-          if  [ $# -lt 1 ] || [ ! -f "$1" ]; then
-              echo "Usage: $0 <somefile.md.nix> <somefile.md>"
-              exit 1
-          fi
-          MD_NIX="$(realpath "$1")"
-          shift
-          OUTPUT_FILENAME="$(basename "$MD_NIX").md"
-
-          nix-build \
-            --impure \
-            --expr "\
-              let nixmd = import \"$MD_NIX\" {}; \
-                  pkgs = import <nixpkgs> {}; in \
-              pkgs.writeText \"$OUTPUT_FILENAME\" nixmd.out" \
-              "$@"
-          '';
-        nixmd-all = pkgs.linkFarmFromDrvs  "nixmd-all" [ nixmd nixmd-build nixmd-run ];
+        nixmd-all = pkgs.linkFarmFromDrvs  "nixmd-all" [ nixmd ];
       });
 
       defaultPackage = forAllSystems (system: self.packages."${system}".nixmd-all);
@@ -100,14 +35,6 @@
         nixmd = {
           type = "app";
           program = "${self.packages."${system}".nixmd}/bin/nixmd";
-        };
-        nixmd-build = {
-          type = "app";
-          program = "${self.packages."${system}".nixmd-build}/bin/nixmd-build";
-        };
-        nixmd-run = {
-          type = "app";
-          program = "${self.packages."${system}".nixmd-run}/bin/nixmd-run";
         };
       });
       defaultApp = forAllSystems (system: self.apps."${system}".nixmd);
@@ -118,8 +45,6 @@
         pkgs.mkShell {
             buildInputs = [
               self.packages."${system}".nixmd
-              self.packages."${system}".nixmd-build
-              self.packages."${system}".nixmd-run
               pkgs.jq
             ];
             buildPhase = "";

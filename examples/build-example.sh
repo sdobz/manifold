@@ -12,10 +12,10 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 buildExample() {
     cd "$1"
     local exampleName="$(basename $1)"
-    local nixmd="$(dirname $1)/.."
+    local nixmd="$(dirname $1)/../nixmd"
     
-    cp "$($nixmd/nixmd-build $exampleName.md --no-link --show-trace)" $exampleName.md.nix
-    cp "$(nixmd-run $exampleName.md.nix --no-link)" $exampleName.md.nix.md
+    cp "$("$nixmd" build $exampleName.md)" $exampleName.md.nix
+    "$nixmd" fix "$exampleName.md"
 }
 
 if [ -z "${1+xxx}" ]; then

@@ -397,7 +397,7 @@ rec {
   # io output
   ioStart = tag "<!-- io -->";
   ioEnd = tag "<!-- /io -->";
-  ioNode = between ioStart ioEnd (fmap (_: "") (takeUntil ioEnd));
+  ioNode = annotateText (between ioStart ioEnd (fmap (_: {type = "io-skip";}) (takeUntil ioEnd)));
 
   # the rest of the text
   notPlainText = opt [ codeNode htmlTagNode ioNode ];
@@ -430,7 +430,7 @@ rec {
       then dump result
     else
       let ast = elemAt result 1; in
-      toJSON ast;
+      ast;
 
   escape = replaceStrings [ "\n" "\r" "\t" "\\" "\"" "\${" ] [ "\\n" "\\r" "\\t" "\\\\" "\\\"" "\\\${" ];
   quoteNodeText = node: "\"${escape node.text}\"";
@@ -458,6 +458,7 @@ rec {
         printStrings = map (attr: "(${attr.value})") printExpressions;
       in
         overlay [] ([ (quoteNodeText node) "\"<!-- io -->\"" ] ++ printStrings ++ [ "\"<!-- /io -->\"" ]);
+    "io-skip" = node: "";
     "code" = node: overlay [ "${node.id} = \"${escape node.code}\";" ] [ (quoteNodeText node) ];
     "text" = node: overlay [] [ (quoteNodeText node) ];
   };

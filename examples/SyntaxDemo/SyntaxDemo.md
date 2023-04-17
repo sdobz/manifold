@@ -7,4 +7,4 @@ some code
 ```
 
 <let binding='prev.codeBlockId' sum='number + 1' />
-<io print='"${stringParam} ${final.binding} ${toString final.sum}"' />
+<io print='"${stringParam} ${final.binding} ${toString final.sum}"' /><!-- io -->default some code 2<!-- /io -->

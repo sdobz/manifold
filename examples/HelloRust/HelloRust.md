@@ -12,7 +12,8 @@ fn main() {
 When compiled and built this produces
 
 ```
-<io print='captureStdout "${final.demoRust}/bin/hello"' />
+<io print='captureStdout "${final.demoRust}/bin/hello"' /><!-- io -->Hello, World!
+<!-- /io -->
 ```
 
 The above output depends on a prelude, defined here

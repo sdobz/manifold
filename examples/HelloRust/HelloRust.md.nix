@@ -52,6 +52,7 @@ let nixmd = rec {
       ];
     })
 
+
     (final: prev: with final.global; rec {
       out = prev.out + builtins.concatStringsSep "" [
           "\n```\n\nThe above output depends on a prelude, defined here\n\n"

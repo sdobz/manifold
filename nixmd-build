@@ -1,8 +1,0 @@
-#!/usr/bin/env bash
-
-# runs the local ./bootstrap/markdown.nix file instead of the flake version
-SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
-
-MARKDOWN_NIX=$(realpath "$SCRIPT_DIR/bootstrap/markdown.nix") \
-RUNTIME_NIX=$(realpath "$SCRIPT_DIR/bootstrap/runtime.nix") \
-nixmd-build "$@"
