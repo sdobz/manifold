@@ -56,6 +56,18 @@ sub_fix() { # <source.md>         - Replace the source markdown with its fixed v
     cp "$evalText" "$sourceText"
 }
 
+sub_watch() { # <src.md> <dst.md> - Whenever src changes evaluate into dst
+    local sourceText="$(realpath "$1")"
+    shift
+    local destinationText="$(realpath "$1")"
+    shift
+        
+    cp "$(sub_evaluate "$sourceText")" "$destinationText"
+    while inotifywait -e modify "$sourceText"; do
+        cp "$(sub_evaluate "$sourceText")" "$destinationText"
+    done
+}
+
 sub_eval-nix() { # "expr"         - Import markdown and run command
     local cmd="$1"
     shift

@@ -46,6 +46,7 @@
             buildInputs = [
               self.packages."${system}".nixmd
               pkgs.jq
+              pkgs.inotify-tools
             ];
             buildPhase = "";
             shellHook = ''

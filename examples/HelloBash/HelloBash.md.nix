@@ -13,20 +13,7 @@ let nixmd = rec {
   overlays = [
     (final: prev: with final.global; rec {
       out = prev.out + builtins.concatStringsSep "" [
-          "This example shows how to capture the stdout of a bash script\n\n"
-      ];
-    })
-
-    (final: prev: with final.global; rec {
-      global.pkgs = if builtins.hasAttr "pkgs" __args then __args.${"pkgs"} else import <nixpkgs> {};
-      out = prev.out + builtins.concatStringsSep "" [
-          "<with pkgs='import <nixpkgs> {}' />"
-      ];
-    })
-
-    (final: prev: with final.global; rec {
-      out = prev.out + builtins.concatStringsSep "" [
-          "\n\nFirst define the shell script\n\n"
+          "This example shows how to capture the stdout of a bash script\n\n\nFirst define the shell script:\n\n"
       ];
     })
 
@@ -39,7 +26,21 @@ let nixmd = rec {
 
     (final: prev: with final.global; rec {
       out = prev.out + builtins.concatStringsSep "" [
-          "\n\nThen define a derivation using the script value as source text\n\n"
+          "\n\nThen define a nix derivation that runs the shell script\n\n"
+      ];
+    })
+
+    (final: prev: with final.global; rec {
+      global.pkgs = if builtins.hasAttr "pkgs" __args then __args.${"pkgs"} else import <nixpkgs> {};
+      global.code = if builtins.hasAttr "code" __args then __args.${"code"} else code: "```\n${code}\n```";
+      out = prev.out + builtins.concatStringsSep "" [
+          "<with\n    pkgs='import <nixpkgs> {}'\n    code='code: \"```\\n\${code}\\n```\"'\n/>"
+      ];
+    })
+
+    (final: prev: with final.global; rec {
+      out = prev.out + builtins.concatStringsSep "" [
+          "\n\n"
       ];
     })
 
@@ -57,15 +58,17 @@ let nixmd = rec {
 
     (final: prev: with final.global; rec {
       out = prev.out + builtins.concatStringsSep "" [
-          "\n\n```\n"
+          "\n\n"
       ];
     })
 
     (final: prev: with final.global; rec {
       out = prev.out + builtins.concatStringsSep "" [
-          "<io print='prev.demoScript' />"
+          "<io println='code prev.demoScript' />"
           "<!-- io -->"
-          (prev.demoScript)
+          "\n"
+          (code prev.demoScript)
+          "\n"
           "<!-- /io -->"
       ];
     })
@@ -73,7 +76,7 @@ let nixmd = rec {
 
     (final: prev: with final.global; rec {
       out = prev.out + builtins.concatStringsSep "" [
-          "\n```\n\nNext define a builder that captures the stdout of that script into an importable file\n\n"
+          "\n\nNext define a builder that captures the stdout of that script into an importable file\n\n"
       ];
     })
 
@@ -89,15 +92,17 @@ let nixmd = rec {
 
     (final: prev: with final.global; rec {
       out = prev.out + builtins.concatStringsSep "" [
-          "\n\n```\n"
+          "\n\n"
       ];
     })
 
     (final: prev: with final.global; rec {
       out = prev.out + builtins.concatStringsSep "" [
-          "<io print='prev.capturingBuilder' />"
+          "<io println='code prev.capturingBuilder' />"
           "<!-- io -->"
-          (prev.capturingBuilder)
+          "\n"
+          (code prev.capturingBuilder)
+          "\n"
           "<!-- /io -->"
       ];
     })
@@ -105,15 +110,17 @@ let nixmd = rec {
 
     (final: prev: with final.global; rec {
       out = prev.out + builtins.concatStringsSep "" [
-          "\n```\n\nFinally that file is imported, showing the scripts output\n\n```\n"
+          "\n\nFinally that file is imported, showing the scripts output\n\n"
       ];
     })
 
     (final: prev: with final.global; rec {
       out = prev.out + builtins.concatStringsSep "" [
-          "<io print='import (prev.capturingBuilder)' />"
+          "<io println='code (import (prev.capturingBuilder))' />"
           "<!-- io -->"
-          (import (prev.capturingBuilder))
+          "\n"
+          (code (import (prev.capturingBuilder)))
+          "\n"
           "<!-- /io -->"
       ];
     })
@@ -121,7 +128,7 @@ let nixmd = rec {
 
     (final: prev: with final.global; rec {
       out = prev.out + builtins.concatStringsSep "" [
-          "\n```\n"
+          "\n"
       ];
     })
 

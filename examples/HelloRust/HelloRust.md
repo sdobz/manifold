@@ -11,15 +11,13 @@ fn main() {
 
 When compiled and built this produces
 
-```
-<io print='captureStdout "${final.demoRust}/bin/hello"' /><!-- io -->Hello, World!
-<!-- /io -->
-```
+<io println='code (captureStdout "${final.demoRust}/bin/hello")' />
 
 The above output depends on a prelude, defined here
 
 ```nix
 pkgs: rec {
+  code = text: "`"+"``\n${text}\n``"+"`";
   captureStdout = cmd: import (pkgs.runCommand "stdout" {}
     "echo -n \"\\\"\" > $out; ${cmd} >> $out; echo -n \"\\\"\" >> $out");
   buildRust = name: srcText:
@@ -40,4 +38,5 @@ This prelude is then injected into the global context
   prelude='import (pkgs.writeText "helloRustPrelude" prev.nix) pkgs'
   captureStdout='prelude.captureStdout'
   buildRust='prelude.buildRust'
+  code='prelude.code'
 />

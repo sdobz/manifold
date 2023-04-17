@@ -453,11 +453,11 @@ rec {
     "io" = node:
       let
         printlns = filter (attribute: attribute.name == "println") node.attributes;
-        printsFromLns = map (attribute: "\n${attribute.value}\n") printlns;
-        printExpressions = (filter (attribute: attribute.name == "print") node.attributes) ++ printsFromLns;
-        printStrings = map (attr: "(${attr.value})") printExpressions;
+        printlnStrings = foldl' (all: attr: all ++ [ "\"\\n\"" "(${attr.value})" "\"\\n\"" ]) [] printlns;
+        prints = filter (attribute: attribute.name == "print") node.attributes;
+        printStrings = map (attr: "(${attr.value})") prints;
       in
-        overlay [] ([ (quoteNodeText node) "\"<!-- io -->\"" ] ++ printStrings ++ [ "\"<!-- /io -->\"" ]);
+        overlay [] ([ (quoteNodeText node) "\"<!-- io -->\"" ] ++ printStrings ++ printlnStrings ++ [ "\"<!-- /io -->\"" ]);
     "io-skip" = node: "";
     "code" = node: overlay [ "${node.id} = \"${escape node.code}\";" ] [ (quoteNodeText node) ];
     "text" = node: overlay [] [ (quoteNodeText node) ];
