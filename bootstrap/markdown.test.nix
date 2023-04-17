@@ -8,8 +8,6 @@ let
   loremSlice = [ 0 11 "lorem ipsum" ];
   emipsSlice = [ 3  8 "lorem ipsum" ];
 
-  demoSlice = md.makeSlice (readFile ../examples/SyntaxDemo/SyntaxDemo.md);
-  demoRuntime = readFile ../examples/SyntaxDemo/SyntaxDemo.md.nix;
 in
   runTests {
     ##########
@@ -327,10 +325,10 @@ in
     };
 
     testHtmlTagType = let 
-      htmlTagSlice = md.makeSlice "nix";
+      htmlTagSlice = md.makeSlice "io";
     in {
       expr = md.dump (md.storeHtmlTagType htmlTagSlice);
-      expected = { type = "nix"; };
+      expected = { type = "io"; };
     };
 
     testHtmlAttributeValue = let
@@ -348,10 +346,18 @@ in
     };
 
     testHtmlTag = let
-      htmlTagSlice = md.makeSlice ''<nix attr1='value' attr2='value' />'';
+      htmlTagText = "<io attr1='value' attr2='value' />";
+      htmlTagSlice = md.makeSlice htmlTagText;
     in {
       expr = md.dump (md.htmlTagNode htmlTagSlice);
-      expected = { attributes = [ { name = "attr1"; value = "value"; } { name = "attr2";  value = "value"; } ]; type = "nix"; };
+      expected = {
+        attributes = [
+          { name = "attr1"; value = "value"; }
+          { name = "attr2";  value = "value"; }
+        ];
+        type = "io";
+        text = htmlTagText;
+      };
     };
 
     testPlainTextBeforeTag = let
@@ -367,24 +373,23 @@ in
     testTagPreservesNewline = let
       newlineSlice = md.makeSlice ''
         text
-        <nix />
+        <io />
         text
       '';
     in {
       expr = md.dump (md.parseNixmd newlineSlice);
       expected = [
         { text = "text\n"; type = "text"; }
-        { attributes = [ ]; type = "nix"; }
+        { attributes = [ ]; type = "io"; text = "<io />"; }
         { text = "\ntext\n"; type = "text"; }
       ];
     };
 
-    ###########
-    # runtime #
-    ###########
-
-    testDemoRuntime = {
-      expr = md.dumpRuntime ./runtime.nix ../examples/SyntaxDemo/SyntaxDemo.md;
-      expected = demoRuntime;
+    testIOIgnores = let
+      ioSlice = md.makeSlice "<!-- io -->this text is ignored<!-- /io -->";
+      parser = md.thenSkip md.ioNode md.eof;
+    in {
+      expr = md.dump (parser ioSlice);
+      expected = "";
     };
   }

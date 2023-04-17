@@ -32,7 +32,7 @@ Can be invoked with null to resolve
 Can be composed to represent a stack trace
 
 */
-
+ 
 with builtins;
 with {
   traceID = id: trace id id;
@@ -354,6 +354,7 @@ rec {
 
   /*
   combine
+    Run an array of parsers, storing the results of each in an array
   */
   combine = parsers: mapReduce [] (root: value: root ++ [value]) parsers;
 
@@ -373,8 +374,8 @@ rec {
   # allowed tag types
   htmlTagWith = tag "with";
   htmlTagLet = tag "let";
-  htmlTagNix = tag "nix";
-  htmlTagType = opt [ htmlTagWith htmlTagLet htmlTagNix ];
+  htmlTagIO = tag "io";
+  htmlTagType = opt [ htmlTagWith htmlTagLet htmlTagIO ];
   # { token = ".." }
   storeHtmlTagType = lexeme (storeAttribute "type" htmlTagType);
   # `attr=` => {name="attr";}
@@ -391,10 +392,15 @@ rec {
   storeHtmlTagAttrs = combineAttributes [ storeHtmlTagType storeHtmlTagAttributes ];
   htmlTagClose = tag "/>";
 
-  htmlTagNode = between htmlTagOpen htmlTagClose storeHtmlTagAttrs;
+  htmlTagNode = annotateText (between htmlTagOpen htmlTagClose storeHtmlTagAttrs);
+
+  # io output
+  ioStart = tag "<!-- io -->";
+  ioEnd = tag "<!-- /io -->";
+  ioNode = between ioStart ioEnd (fmap (_: "") (takeUntil ioEnd));
 
   # the rest of the text
-  notPlainText = opt [ codeNode htmlTagNode ];
+  notPlainText = opt [ codeNode htmlTagNode ioNode ];
 
   storePlainTextType = pure { "type" = "text"; };
   plainText = mustConsume (takeUntil notPlainText);
@@ -407,6 +413,7 @@ rec {
     plainTextNode
     htmlTagNode
     codeNode
+    ioNode
   ];
 
   parseNixmd = thenSkip (many nodes) eof;
@@ -426,40 +433,36 @@ rec {
       toJSON ast;
 
   escape = replaceStrings [ "\n" "\r" "\t" "\\" "\"" "\${" ] [ "\\n" "\\r" "\\t" "\\\\" "\\\"" "\\\${" ];
-  
-  overlay = contents: "    (final: prev: with final.global; rec {\n${contents}\n    })";
+  quoteNodeText = node: "\"${escape node.text}\"";
 
-  nodeOverlayContents = {
-    "with" = node:
-      let
-        withStrings = map ({name, value}: "      global.${name} = if builtins.hasAttr \"${name}\" __args then __args.\${\"${name}\"} else ${value};") node.attributes;
-      in
-        concatStringsSep "\n" withStrings;
-    "let" = node:
-      let
-        letStrings = map ({name, value}: "      ${name} = ${value};") node.attributes;
-      in
-        concatStringsSep "\n" letStrings;
-    "nix" = node:
-      let
-        printAttributes = filter (attribute: attribute.name == "print") node.attributes;
-        evalAttributes = filter (attribute: attribute.name == "eval") node.attributes;
-      in
-        (if length printAttributes > 0
-          then
-            let printLines = map (attr: "        (${attr.value})") printAttributes;
-            in "      out = prev.out + builtins.concatStringsSep \"\" [\n${concatStringsSep "\n" printLines }\n      ];"
-        else "") +
-        (if length evalAttributes > 0
-          then "      " + (concatStringsSep "\n      " (map ({value, name}: "${value};") evalAttributes))
-        else "");
+  # it feels like this could be written as a parser over the ast rather than string construction...
+  overlay = evalLines: outLines:
+    "    (final: prev: with final.global; rec {\n${
+      if length evalLines > 0 then concatStringsSep "" (map (evalLine: "      ${evalLine}\n") evalLines) else ""
+    }${
+      if length outLines > 0 then "      out = prev.out + builtins.concatStringsSep \"\" [\n${concatStringsSep "" (map (outLine: "          ${outLine}\n") outLines)}      ];\n" else ""
+    }    })\n";
 
-    "code" = node: "      ${node.id} = \"${escape node.code}\";\n      out = prev.out + \"${escape node.text}\";";
-    "text" = node: "      out = prev.out + \"${escape node.text}\";";
+  nodeOverlay = {
+    "with" = node: overlay (
+      map ({name, value}: "global.${name} = if builtins.hasAttr \"${name}\" __args then __args.\${\"${name}\"} else ${value};") node.attributes
+    ) [ (quoteNodeText node) ];
+    "let" = node: overlay (
+      map ({name, value}: "${name} = ${value};") node.attributes
+    ) [ (quoteNodeText node) ];
+    "io" = node:
+      let
+        printlns = filter (attribute: attribute.name == "println") node.attributes;
+        printsFromLns = map (attribute: "\n${attribute.value}\n") printlns;
+        printExpressions = (filter (attribute: attribute.name == "print") node.attributes) ++ printsFromLns;
+        printStrings = map (attr: "(${attr.value})") printExpressions;
+      in
+        overlay [] ([ (quoteNodeText node) "\"<!-- io -->\"" ] ++ printStrings ++ [ "\"<!-- /io -->\"" ]);
+    "code" = node: overlay [ "${node.id} = \"${escape node.code}\";" ] [ (quoteNodeText node) ];
+    "text" = node: overlay [] [ (quoteNodeText node) ];
   };
-  
-  overlayNode = node: overlay (nodeOverlayContents.${node.type} node);
-  nodeOverlays = ast: map overlayNode (filter (node: hasAttr node.type nodeOverlayContents) ast);
+
+  nodeOverlays = ast: map (node: (nodeOverlay.${node.type} node)) ast;
 
   nixmdRuntime = runtime: ast:
     replaceStrings

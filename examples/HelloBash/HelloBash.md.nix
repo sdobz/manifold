@@ -12,21 +12,37 @@ let nixmd = rec {
   makeExtensibleWithCustomName = extenderName: rattrs: fix' (self: (rattrs self) // { ${extenderName} = f: makeExtensibleWithCustomName extenderName (extends f rattrs); });
   overlays = [
     (final: prev: with final.global; rec {
-      out = prev.out + "This example shows how to capture the stdout of a bash script\n\n";
+      out = prev.out + builtins.concatStringsSep "" [
+          "This example shows how to capture the stdout of a bash script\n\n"
+      ];
     })
+
     (final: prev: with final.global; rec {
       global.pkgs = if builtins.hasAttr "pkgs" __args then __args.${"pkgs"} else import <nixpkgs> {};
+      out = prev.out + builtins.concatStringsSep "" [
+          "<with pkgs='import <nixpkgs> {}' />"
+      ];
     })
+
     (final: prev: with final.global; rec {
-      out = prev.out + "\n\nFirst define the shell script\n\n";
+      out = prev.out + builtins.concatStringsSep "" [
+          "\n\nFirst define the shell script\n\n"
+      ];
     })
+
     (final: prev: with final.global; rec {
       bash = "hello";
-      out = prev.out + "```bash\nhello\n```";
+      out = prev.out + builtins.concatStringsSep "" [
+          "```bash\nhello\n```"
+      ];
     })
+
     (final: prev: with final.global; rec {
-      out = prev.out + "\n\nThen define a derivation using the script value as source text\n\n";
+      out = prev.out + builtins.concatStringsSep "" [
+          "\n\nThen define a derivation using the script value as source text\n\n"
+      ];
     })
+
     (final: prev: with final.global; rec {
       demoScript = pkgs.writeShellApplication {
     name="demoScript";
@@ -34,43 +50,78 @@ let nixmd = rec {
     runtimeInputs=[pkgs.hello];
     checkPhase="";
 };
-    })
-    (final: prev: with final.global; rec {
-      out = prev.out + "\n\n```\n";
-    })
-    (final: prev: with final.global; rec {
       out = prev.out + builtins.concatStringsSep "" [
-        (prev.demoScript)
+          "<let demoScript='pkgs.writeShellApplication {\n    name=\"demoScript\";\n    text=prev.bash;\n    runtimeInputs=[pkgs.hello];\n    checkPhase=\"\";\n}' />"
       ];
     })
+
     (final: prev: with final.global; rec {
-      out = prev.out + "\n```\n\nNext define a builder that captures the stdout of that script into an importable file\n\n";
+      out = prev.out + builtins.concatStringsSep "" [
+          "\n\n```\n"
+      ];
     })
+
+    (final: prev: with final.global; rec {
+      out = prev.out + builtins.concatStringsSep "" [
+          "<io print='prev.demoScript' />"
+          "<!-- io -->"
+          (prev.demoScript)
+          "<!-- /io -->"
+      ];
+    })
+
+    (final: prev: with final.global; rec {
+      out = prev.out + builtins.concatStringsSep "" [
+          "\n```\n\nNext define a builder that captures the stdout of that script into an importable file\n\n"
+      ];
+    })
+
     (final: prev: with final.global; rec {
       capturingBuilder = pkgs.runCommand
     "capturingBuilder" {}
     "echo -n \\\" > $out; ${prev.demoScript}/bin/demoScript >> $out; echo -n \\\" >> $out"
 ;
-    })
-    (final: prev: with final.global; rec {
-      out = prev.out + "\n\n```\n";
-    })
-    (final: prev: with final.global; rec {
       out = prev.out + builtins.concatStringsSep "" [
-        (prev.capturingBuilder)
+          "<let capturingBuilder='pkgs.runCommand\n    \"capturingBuilder\" {}\n    \"echo -n \\\\\\\" > $out; \${prev.demoScript}/bin/demoScript >> $out; echo -n \\\\\\\" >> $out\"\n' />"
       ];
     })
-    (final: prev: with final.global; rec {
-      out = prev.out + "\n```\n\nFinally that file is imported, showing the scripts output\n\n```\n";
-    })
+
     (final: prev: with final.global; rec {
       out = prev.out + builtins.concatStringsSep "" [
-        (import (prev.capturingBuilder))
+          "\n\n```\n"
       ];
     })
+
     (final: prev: with final.global; rec {
-      out = prev.out + "\n```\n";
+      out = prev.out + builtins.concatStringsSep "" [
+          "<io print='prev.capturingBuilder' />"
+          "<!-- io -->"
+          (prev.capturingBuilder)
+          "<!-- /io -->"
+      ];
     })
+
+    (final: prev: with final.global; rec {
+      out = prev.out + builtins.concatStringsSep "" [
+          "\n```\n\nFinally that file is imported, showing the scripts output\n\n```\n"
+      ];
+    })
+
+    (final: prev: with final.global; rec {
+      out = prev.out + builtins.concatStringsSep "" [
+          "<io print='import (prev.capturingBuilder)' />"
+          "<!-- io -->"
+          (import (prev.capturingBuilder))
+          "<!-- /io -->"
+      ];
+    })
+
+    (final: prev: with final.global; rec {
+      out = prev.out + builtins.concatStringsSep "" [
+          "\n```\n"
+      ];
+    })
+
   ];
   extensions = composeManyExtensions overlays;
   initialSelf = { out = ""; global = {}; };

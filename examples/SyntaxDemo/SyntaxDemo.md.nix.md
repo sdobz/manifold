@@ -1,10 +1,10 @@
 # Plain Markdown
-
+<with stringParam='"default"' number='1' />
 plain text
 
 ```codeBlockId
 some code
 ```
 
-
-default some code 2
+<let binding='prev.codeBlockId' sum='number + 1' />
+<io print='"${stringParam} ${final.binding} ${toString final.sum}"' /><!-- io -->default some code 2<!-- /io -->

@@ -12,37 +12,67 @@ let nixmd = rec {
   makeExtensibleWithCustomName = extenderName: rattrs: fix' (self: (rattrs self) // { ${extenderName} = f: makeExtensibleWithCustomName extenderName (extends f rattrs); });
   overlays = [
     (final: prev: with final.global; rec {
-      out = prev.out + "# Plain Markdown\n";
+      out = prev.out + builtins.concatStringsSep "" [
+          "# Plain Markdown\n"
+      ];
     })
+
     (final: prev: with final.global; rec {
       global.stringParam = if builtins.hasAttr "stringParam" __args then __args.${"stringParam"} else "default";
       global.number = if builtins.hasAttr "number" __args then __args.${"number"} else 1;
+      out = prev.out + builtins.concatStringsSep "" [
+          "<with stringParam='\"default\"' number='1' />"
+      ];
     })
+
     (final: prev: with final.global; rec {
-      out = prev.out + "\nplain text\n\n";
+      out = prev.out + builtins.concatStringsSep "" [
+          "\nplain text\n\n"
+      ];
     })
+
     (final: prev: with final.global; rec {
       codeBlockId = "some code";
-      out = prev.out + "```codeBlockId\nsome code\n```";
+      out = prev.out + builtins.concatStringsSep "" [
+          "```codeBlockId\nsome code\n```"
+      ];
     })
+
     (final: prev: with final.global; rec {
-      out = prev.out + "\n\n";
+      out = prev.out + builtins.concatStringsSep "" [
+          "\n\n"
+      ];
     })
+
     (final: prev: with final.global; rec {
       binding = prev.codeBlockId;
       sum = number + 1;
-    })
-    (final: prev: with final.global; rec {
-      out = prev.out + "\n";
-    })
-    (final: prev: with final.global; rec {
       out = prev.out + builtins.concatStringsSep "" [
-        ("${stringParam} ${final.binding} ${toString final.sum}")
+          "<let binding='prev.codeBlockId' sum='number + 1' />"
       ];
     })
+
     (final: prev: with final.global; rec {
-      out = prev.out + "\n";
+      out = prev.out + builtins.concatStringsSep "" [
+          "\n"
+      ];
     })
+
+    (final: prev: with final.global; rec {
+      out = prev.out + builtins.concatStringsSep "" [
+          "<io print='\"\${stringParam} \${final.binding} \${toString final.sum}\"' />"
+          "<!-- io -->"
+          ("${stringParam} ${final.binding} ${toString final.sum}")
+          "<!-- /io -->"
+      ];
+    })
+
+    (final: prev: with final.global; rec {
+      out = prev.out + builtins.concatStringsSep "" [
+          "\n"
+      ];
+    })
+
   ];
   extensions = composeManyExtensions overlays;
   initialSelf = { out = ""; global = {}; };

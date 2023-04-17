@@ -10,8 +10,8 @@
 
       packages = forAllSystems (system: let
         pkgs = self.legacyPackages."${system}";
-        markdown_nix = ./nix/markdown.nix;
-        runtime_nix = ./nix/runtime.nix;
+        markdown_nix = ./bootstrap/markdown.nix;
+        runtime_nix = ./bootstrap/runtime.nix;
         runtimeInputs = [ pkgs.nix ];
       in rec {
         nixmd = pkgs.writeScriptBin "nixmd"

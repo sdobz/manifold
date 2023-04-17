@@ -1,23 +1,71 @@
-# Nix Literate Programming Environment
+# Using Markdown to Tell a Story in Nix
 
-Literate programming is the upside - down inverse of what a computer expects. It presents the code to a human audience and adds a build step to help the computer figure it out.
+Our cognition is rooted in the tradition of story telling, weaving a tale of motivation and structure
 
-Nix can be seen from an operational perspective as a DSL used to write build scripts. It can be fussy and hard to reason about as it must work around all of the historical cruft required to build software.
+We are responsible for the semantics of a program, what it means and represents in the broader context of the problem being sovled.
 
-## Goal
+Names have power, they give order to the chaos of creation, bridging the gap between our thought and communication.
 
-Use markdown to describe a literate software development environment by generating nix derivations.
+## Motivation
 
-## Syntax / Parsing
+The order that we tell a story tends to be told is different than what a computer expects. We start with genralities, they start with specifics.
 
-The file is parsed once, top to bottom, and a runtime representation is built. The only syntax handled by are self closing html tags and identified code blocks
+## Markdown
+
+Markdown has a graceful path to enhancement, it is palatable in plain text and is trivial to render into html. Headers, links, and embeds give us just enough to tell a structured story.
+
+## Nix
+
+Nix is a functional language that is designed to transform source code into software. From an operational perspective it is a DSL used to write build scripts.
+
+## Workflow
+
+1. Write markdown files describing the programs semantics
+2. Describe the major features of the software
+3. Add implementation details to the features
+4. Run nixmd on the markdown to produce artifacts and inspect behavior
+5. Refine the implementation
+
+## CLI
+
+```
+nixmd build <source.md>
+  Output a directory containing all artifacts:
+    source.md.nix - The nix script used to produce the artifacts
+    source.md.nix.md - The evaluated source text
+    <artifact> - any file described by the source text
+
+nixmd diff <source.md>
+  Output the diff between the source text and the evaluated text
+
+nixmd fix <source.md>
+  Repeatedly apply nixmd diff to the source markdown in place until it stops changing
+
+nixmd test
+  Run unit tests in bootstrap/*.test.nix
+```
+
+# Implementation
+
+## Bootstrap
+
+Implement a version in pure nix, enough to prove the concept. It should fit into a single file less than 500 lines.
+
+## Parser / Testing
+
+Use unit tests to construct the parser
+
+```
+nix eval --impure --expr 'import ./nix/markdown.test.nix {}'
+```
+
+Markdown source text is fed character by character into parser combinators. Four source text transformations are recognized.
 
 Available tags are:
-* `<nix eval='<expr 1>' eval='<expr 2>' />` - evaluate an expression and include it in the output markdown
-* `<arg <param>='<default expr>' ... />` - add an argument to the derivation
-* `<let <binding>='"string value"' ... />`
-
-Code blocks can be started using `` ```codeBlockId ``
+* `<io print='<expr>' println='<expr>' />` - Print the result of the expression to the output markdown
+* `<!-- io --><!-- /io -->` - Bounds input/output, omitted in subsequent evaluations
+* `<with <param>='<default expr>' ... />` - Add attributes to the global scope of every expression
+* `<let <binding>='"string value"' ... />` - assign a name to an expression 
 
 ### Syntax issues
 
@@ -29,15 +77,33 @@ Including a string in the expression can be done like so:
 Remaining parser work:
 * Escaping self closing html tags is currently not possible.
 * Escaping single quotes is currently not possible
+* IO termination is not complete
 
-## Runtime / Tangling
+## Runtime
 
-The markdown is translated into a nix derivation, inlining expressions and wrapping each in an overlay.
+The source text is eventually resolved to an attribute set (dictionary / hash map / object / etc) that contains a description of all artifacts. This is ALSO a nix derivation to the output directory
 
-### Results / Weaving
+```nix
+{
+    out = ''evaluated text'';
+    nixmd = {}; # internal data structures
+    global = {}; # Values added to each layer
 
+    arbitraryKeys = "anything"; # transformations can add arbitrary data
+    codeBlockIds = "contents of code block"; # Code blocks are added
+}
+```
 
-# Outstanding questions
+Each transformation adds a layer to the fixed-point used to describe the software.
+
+```nix
+final: prev: {
+    # final represents the final data structure, this enables out-of-order evaluation
+    # prev represents the state immediately before this layer runs
+}
+```
+
+# Theory
 
 ## Philosophy
 
@@ -68,29 +134,15 @@ source code runtime
 
 A sufficiecntly lucid explanation of your programs behavior can be interpreted as the program itself
 
-# Implementation
-
-## Bootstrap
-
-Implement a subset in nix, enough to establish the build environment
-
-This can compromize full syntax (escapes etc) as long as it still achieves identical evaluation
-
-It should fit into a single file less than 500 lines
-
-## Testing
-
-```
-nix eval --impure --expr 'import ./nix/markdown.test.nix {}'
-```
 
 # Terms
 
+* Parser - a function that consumes a stream of symbols into another form, and returns the remainder
+* Combinator - a higher order function that sequences parsers
+* Fixed point - an argument to a function that evaluates to itself. `f(x) = x^2, f(1) == 1`
 * Source Text - the original markdown
-* Tangle - transform source markdown into executable files
-* Weave - derive additional human readable markdown from source
-* Handler - is fed inptu from the markdown maintains state
-* Frontend - has a runtime for that language
+* Artifact - A file produced by evaluating the source text
+* Evaluated Text - the original markdown with all expressions evaluated
 
 # Nontrivial demonstration
 
@@ -109,8 +161,6 @@ rerun-if instructions
 ## Reference material
 
 * [tangledown.py](https://github.com/rebcabin/tangledown)
-
-Building a parser (combinator)
 * [nix parsec](https://github.com/kanwren/nix-parsec/blob/master/parsec.nix)
 * [nom-rs](https://github.com/rust-bakery/nom)
 * [hasura parser-combinator](https://hasura.io/blog/parser-combinators-walkthrough/)
@@ -125,6 +175,13 @@ Building a parser (combinator)
 * [writing a json parser in haskell](https://hasura.io/blog/parser-combinators-walkthrough/)
 * [Parsec style parser for markdown](https://github.com/tiqwab/md-parser)
 * [rust webassembly what it's all about](https://sdfgeoff.github.io/wasm_minigames/what_its_all_about.html)
+* [fall-from-grace demo language](https://github.com/Gabriella439/grace)
+
+## TODO
+
+1. ~~Fixed point~~
+2. ~~Organize files~~
+3. CLI interface
 
 # Motivating project
 

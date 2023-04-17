@@ -7,13 +7,13 @@ fn main() {
   println!("Hello, World!");
 }
 ```
-
+<let demoRust='buildRust "hello" prev.rust' />
 
 When compiled and built this produces
 
 ```
-Hello, World!
-
+<io print='captureStdout "${final.demoRust}/bin/hello"' /><!-- io -->Hello, World!
+<!-- /io -->
 ```
 
 The above output depends on a prelude, defined here
@@ -35,4 +35,9 @@ pkgs: rec {
 
 This prelude is then injected into the global context
 
-
+<with
+  pkgs='import <nixpkgs> {}'
+  prelude='import (pkgs.writeText "helloRustPrelude" prev.nix) pkgs'
+  captureStdout='prelude.captureStdout'
+  buildRust='prelude.buildRust'
+/>

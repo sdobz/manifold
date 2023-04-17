@@ -18,7 +18,7 @@ Then define a derivation using the script value as source text
 }' />
 
 ```
-<nix print='prev.demoScript' />
+<io print='prev.demoScript' />
 ```
 
 Next define a builder that captures the stdout of that script into an importable file
@@ -29,11 +29,11 @@ Next define a builder that captures the stdout of that script into an importable
 ' />
 
 ```
-<nix print='prev.capturingBuilder' />
+<io print='prev.capturingBuilder' />
 ```
 
 Finally that file is imported, showing the scripts output
 
 ```
-<nix print='import (prev.capturingBuilder)' />
+<io print='import (prev.capturingBuilder)' />
 ```

@@ -12,7 +12,7 @@ fn main() {
 When compiled and built this produces
 
 ```
-<nix print='captureStdout "${final.demoRust}/bin/hello"' />
+<io print='captureStdout "${final.demoRust}/bin/hello"' />
 ```
 
 The above output depends on a prelude, defined here
