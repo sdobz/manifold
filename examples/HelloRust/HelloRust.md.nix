@@ -39,15 +39,17 @@ let nixmd = rec {
 
     (final: prev: with final.global; rec {
       out = prev.out + builtins.concatStringsSep "" [
-          "\n\nWhen compiled and built this produces\n\n```\n"
+          "\n\nWhen compiled and built this produces\n\n"
       ];
     })
 
     (final: prev: with final.global; rec {
       out = prev.out + builtins.concatStringsSep "" [
-          "<io print='captureStdout \"\${final.demoRust}/bin/hello\"' />"
+          "<io println='code (captureStdout \"\${final.demoRust}/bin/hello\")' />"
           "<!-- io -->"
-          (captureStdout "${final.demoRust}/bin/hello")
+          "\n"
+          (code (captureStdout "${final.demoRust}/bin/hello"))
+          "\n"
           "<!-- /io -->"
       ];
     })
@@ -55,14 +57,14 @@ let nixmd = rec {
 
     (final: prev: with final.global; rec {
       out = prev.out + builtins.concatStringsSep "" [
-          "\n```\n\nThe above output depends on a prelude, defined here\n\n"
+          "\n\nThe above output depends on a prelude, defined here\n\n"
       ];
     })
 
     (final: prev: with final.global; rec {
-      nix = "pkgs: rec {\n  captureStdout = cmd: import (pkgs.runCommand \"stdout\" {}\n    \"echo -n \\\"\\\\\\\"\\\" > $out; \${cmd} >> $out; echo -n \\\"\\\\\\\"\\\" >> $out\");\n  buildRust = name: srcText:\n    let\n      srcFile = pkgs.writeText \"\${name}-src\" srcText;\n    in\n      pkgs.runCommandCC \"\${name}\" {} ''\n        mkdir -p \"$out/bin\"\n        \${pkgs.rustc}/bin/rustc \${srcFile} -o \"$out/bin/\${name}\"\n      '';\n}";
+      nix = "pkgs: rec {\n  code = text: \"`\"+\"``\\n\${text}\\n``\"+\"`\";\n  captureStdout = cmd: import (pkgs.runCommand \"stdout\" {}\n    \"echo -n \\\"\\\\\\\"\\\" > $out; \${cmd} >> $out; echo -n \\\"\\\\\\\"\\\" >> $out\");\n  buildRust = name: srcText:\n    let\n      srcFile = pkgs.writeText \"\${name}-src\" srcText;\n    in\n      pkgs.runCommandCC \"\${name}\" {} ''\n        mkdir -p \"$out/bin\"\n        \${pkgs.rustc}/bin/rustc \${srcFile} -o \"$out/bin/\${name}\"\n      '';\n}";
       out = prev.out + builtins.concatStringsSep "" [
-          "```nix\npkgs: rec {\n  captureStdout = cmd: import (pkgs.runCommand \"stdout\" {}\n    \"echo -n \\\"\\\\\\\"\\\" > $out; \${cmd} >> $out; echo -n \\\"\\\\\\\"\\\" >> $out\");\n  buildRust = name: srcText:\n    let\n      srcFile = pkgs.writeText \"\${name}-src\" srcText;\n    in\n      pkgs.runCommandCC \"\${name}\" {} ''\n        mkdir -p \"$out/bin\"\n        \${pkgs.rustc}/bin/rustc \${srcFile} -o \"$out/bin/\${name}\"\n      '';\n}\n```"
+          "```nix\npkgs: rec {\n  code = text: \"`\"+\"``\\n\${text}\\n``\"+\"`\";\n  captureStdout = cmd: import (pkgs.runCommand \"stdout\" {}\n    \"echo -n \\\"\\\\\\\"\\\" > $out; \${cmd} >> $out; echo -n \\\"\\\\\\\"\\\" >> $out\");\n  buildRust = name: srcText:\n    let\n      srcFile = pkgs.writeText \"\${name}-src\" srcText;\n    in\n      pkgs.runCommandCC \"\${name}\" {} ''\n        mkdir -p \"$out/bin\"\n        \${pkgs.rustc}/bin/rustc \${srcFile} -o \"$out/bin/\${name}\"\n      '';\n}\n```"
       ];
     })
 
@@ -77,8 +79,9 @@ let nixmd = rec {
       global.prelude = if builtins.hasAttr "prelude" __args then __args.${"prelude"} else import (pkgs.writeText "helloRustPrelude" prev.nix) pkgs;
       global.captureStdout = if builtins.hasAttr "captureStdout" __args then __args.${"captureStdout"} else prelude.captureStdout;
       global.buildRust = if builtins.hasAttr "buildRust" __args then __args.${"buildRust"} else prelude.buildRust;
+      global.code = if builtins.hasAttr "code" __args then __args.${"code"} else prelude.code;
       out = prev.out + builtins.concatStringsSep "" [
-          "<with\n  pkgs='import <nixpkgs> {}'\n  prelude='import (pkgs.writeText \"helloRustPrelude\" prev.nix) pkgs'\n  captureStdout='prelude.captureStdout'\n  buildRust='prelude.buildRust'\n/>"
+          "<with\n  pkgs='import <nixpkgs> {}'\n  prelude='import (pkgs.writeText \"helloRustPrelude\" prev.nix) pkgs'\n  captureStdout='prelude.captureStdout'\n  buildRust='prelude.buildRust'\n  code='prelude.code'\n/>"
       ];
     })
 

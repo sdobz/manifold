@@ -47,9 +47,11 @@
               self.packages."${system}".nixmd
               pkgs.jq
               pkgs.inotify-tools
+              pkgs.cloc
             ];
             buildPhase = "";
             shellHook = ''
+            mkdir .gcroot
             '';
           }
       );

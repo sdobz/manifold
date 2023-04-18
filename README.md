@@ -25,24 +25,40 @@ Nix is a functional language that is designed to transform source code into soft
 3. Add implementation details to the features
 4. Run nixmd on the markdown to produce artifacts and inspect behavior
 5. Refine the implementation
+6. Package for distribution
 
 ## CLI
 
-```
-nixmd build <source.md>
-  Output a directory containing all artifacts:
-    source.md.nix - The nix script used to produce the artifacts
-    source.md.nix.md - The evaluated source text
-    <artifact> - any file described by the source text
+```bash
+$ nixmd runtime <source.md>
+Output the path to the runtime used to generate the evaluated text
+
+$ nixmd evaluate <source.md>
+  Output the path to the evaluated markdown 
 
 nixmd diff <source.md>
   Output the diff between the source text and the evaluated text
 
 nixmd fix <source.md>
-  Repeatedly apply nixmd diff to the source markdown in place until it stops changing
+  Overwrite the source markdown with the evaluated text
+
+nixmd watch <source.md> <destination.md>
+  Whenever source.md changes evaluate and write it to destination.md
 
 nixmd test
   Run unit tests in bootstrap/*.test.nix
+```
+
+### Out
+
+
+
+### Garbage Collection
+
+Nix leaves footsteps. These files are linked to in the 
+
+```bash
+pwd 
 ```
 
 # Implementation
@@ -63,9 +79,13 @@ Markdown source text is fed character by character into parser combinators. Four
 
 Available tags are:
 * `<io print='<expr>' println='<expr>' />` - Print the result of the expression to the output markdown
-* `<!-- io --><!-- /io -->` - Bounds input/output, omitted in subsequent evaluations
+* `<!-- io -->...<!-- /io -->` - Bounds printed, omitted in subsequent evaluations
 * `<with <param>='<default expr>' ... />` - Add attributes to the global scope of every expression
-* `<let <binding>='"string value"' ... />` - assign a name to an expression 
+* `<let <binding>='"string value"' ... />` - assign a name to an expression
+
+Potential tags:
+* `<fetch <name>='https://<source>' />` - load filesystem or local data into a string
+* `<out <attr>='path/to/file.ext' />` - write final state to 
 
 ### Syntax issues
 
@@ -181,7 +201,8 @@ rerun-if instructions
 
 1. ~~Fixed point~~
 2. ~~Organize files~~
-3. CLI interface
+3. ~~CLI interface~~
+4. 
 
 # Motivating project
 

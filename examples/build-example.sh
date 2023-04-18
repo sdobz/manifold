@@ -14,7 +14,7 @@ buildExample() {
     local exampleName="$(basename $1)"
     local nixmd="$(dirname $1)/../nixmd"
     
-    cp "$("$nixmd" build $exampleName.md)" $exampleName.md.nix
+    cp "$("$nixmd" runtime $exampleName.md)" $exampleName.md.nix
     "$nixmd" fix "$exampleName.md"
 }
 

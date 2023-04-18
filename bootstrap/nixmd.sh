@@ -5,14 +5,7 @@ if [ -z "${MARKDOWN_NIX+xxx}" ] || [ -z "${RUNTIME_NIX+xxx}" ] || [ -z "${NIXMD_
     exit 1
 fi
 
-sub_help() { #                    - Output subcommands
-    echo "Usage: nixmd <subcommand> [options]"
-    echo "Subcommands:"
-    grep "^sub_" "$NIXMD_SH" | sed 's/sub_\([a-z\-]*\).*#\(.*\)/  \1\2/g'
-    echo ""
-}
-
-sub_build() { # <source.md>       - Print path to nix runtime
+sub_runtime() { # <source.md>      - Print path to nix runtime
     local sourceText="$(realpath "$1")"
     shift
     local runtimeName="$(basename "$sourceText").nix"
@@ -29,7 +22,7 @@ sub_build() { # <source.md>       - Print path to nix runtime
 sub_evaluate() { # <source.md>    - Print path to evaluated nix
     local sourceText="$(realpath "$1")"
     shift
-    local runtimeName="$(basename $sourceText).nix"
+    local runtimeName="$(basename "$sourceText").nix"
     local evaluationName="$runtimeName.md"
     nix-build \
         --impure \
@@ -63,6 +56,7 @@ sub_watch() { # <src.md> <dst.md> - Whenever src changes evaluate into dst
     shift
         
     cp "$(sub_evaluate "$sourceText")" "$destinationText"
+    chmod u+rw "$destinationText"
     while inotifywait -e modify "$sourceText"; do
         cp "$(sub_evaluate "$sourceText")" "$destinationText"
     done
@@ -80,6 +74,17 @@ sub_eval-nix() { # "expr"         - Import markdown and run command
 sub_ast() { # <source.md>         - Dump the AST for this markdown file
     local sourceText="$(realpath "$1")"
     sub_evalNix "dumpAst \"${sourceText}\"" --json
+}
+
+sub_cloc() { #                    - Dump how many lines of code in bootstrap files
+    cloc "$NIXMD_SH" "$MARKDOWN_NIX" "$RUNTIME_NIX"
+}
+
+sub_help() { #                    - Output subcommands
+    echo "Usage: nixmd <subcommand> [options]"
+    echo "Subcommands:"
+    grep "^sub_" "$NIXMD_SH" | sed 's/sub_\([a-z\-]*\).*#\(.*\)/  \1\2/g'
+    echo ""
 }
 
 subcommand="${1:-}"
