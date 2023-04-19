@@ -12,10 +12,11 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 buildExample() {
     cd "$1"
     local exampleName="$(basename $1)"
-    local nixmd="$(dirname $1)/../nixmd"
+    local manifold="$(dirname $1)/../manifold"
     
-    cp "$("$nixmd" runtime $exampleName.md)" $exampleName.md.nix
-    "$nixmd" fix "$exampleName.md"
+    cp "$("$manifold" runtime $exampleName.nix.md)" "$exampleName.nix.md.nix"
+    chmod u+rw "$exampleName.nix.md.nix"
+    "$manifold" fix "$exampleName.nix.md"
 }
 
 if [ -z "${1+xxx}" ]; then

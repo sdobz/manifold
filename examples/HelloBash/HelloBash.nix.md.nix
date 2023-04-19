@@ -1,5 +1,5 @@
 __args:
-let nixmd = rec {
+let manifold = rec {
   args = __args;
   # https://github.com/NixOS/nixpkgs/blob/master/lib/list.nix
   foldr = op: nul: list: let len = builtins.length list; fold' = n: if n == len then nul else op (builtins.elemAt list n) (fold' (n + 1)); in fold' 0;
@@ -137,4 +137,4 @@ let nixmd = rec {
   initialSelf = { out = ""; global = {}; };
   finalSelf = makeExtensible (extends extensions (self: initialSelf));
 }; in
-  nixmd.finalSelf
+  manifold.finalSelf

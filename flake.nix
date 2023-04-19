@@ -10,41 +10,41 @@
 
       packages = forAllSystems (system: let
         pkgs = self.legacyPackages."${system}";
-        markdown_nix = ./bootstrap/markdown.nix;
-        runtime_nix = ./bootstrap/runtime.nix;
-        nixmd_sh = ./bootstrap/nixmd.sh;
+        transform_nix = ./nix/transform.md.nix;
+        runtime_nix = ./nix/runtime.nix;
+        manifold_cli = ./nix/manifold.cli.sh;
         runtimeInputs = [ pkgs.nix ];
       in rec {
-        nixmd = pkgs.writeScriptBin "nixmd"
+        manifold = pkgs.writeScriptBin "manifold"
           ''
           #!${pkgs.runtimeShell}
 
           export PATH="${pkgs.lib.makeBinPath runtimeInputs}:$PATH"
-          export MARKDOWN_NIX="${markdown_nix}"
+          export TRANSFORM_NIX="${transform_nix}"
           export RUNTIME_NIX="${runtime_nix}"
-          export NIXMD_SH="${nixmd_sh}"
+          export MANIFOLD_CLI="${manifold_cli}"
 
-          ${pkgs.runtimeShell} "$NIXMD_SH" "$@"
+          ${pkgs.runtimeShell} "$MANIFOLD_CLI" "$@"
           '';
-        nixmd-all = pkgs.linkFarmFromDrvs  "nixmd-all" [ nixmd ];
+        manifold-all = pkgs.linkFarmFromDrvs  "manifold-all" [ manifold ];
       });
 
-      defaultPackage = forAllSystems (system: self.packages."${system}".nixmd-all);
+      defaultPackage = forAllSystems (system: self.packages."${system}".manifold-all);
 
       apps = forAllSystems (system: {
-        nixmd = {
+        manifold = {
           type = "app";
-          program = "${self.packages."${system}".nixmd}/bin/nixmd";
+          program = "${self.packages."${system}".manifold}/bin/manifold";
         };
       });
-      defaultApp = forAllSystems (system: self.apps."${system}".nixmd);
+      defaultApp = forAllSystems (system: self.apps."${system}".manifold);
       formatter = forAllSystems (system: self.legacyPackages."${system}".nixfmt);
 
       devShell =  forAllSystems (system:
         let pkgs = self.legacyPackages."${system}"; in
         pkgs.mkShell {
             buildInputs = [
-              self.packages."${system}".nixmd
+              self.packages."${system}".manifold
               pkgs.jq
               pkgs.inotify-tools
               pkgs.cloc

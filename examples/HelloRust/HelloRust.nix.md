@@ -1,6 +1,6 @@
 This is a more complex example demonstrating how to construct a source folder, then use a toolchain to build those files.
 
-It highlights the out-of-order nature of literate programming and establishes some fundamental patterns of nixmd.
+It highlights the out-of-order nature of literate programming and establishes some fundamental patterns of manifold.
 
 ```rust
 fn main() {

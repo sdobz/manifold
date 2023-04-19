@@ -3,7 +3,7 @@ let
   inherit (pkgs) lib;
   inherit (lib) runTests;
   inherit (builtins) readFile;
-  md = import ./markdown.nix;
+  md = import ./transform.md.nix;
 
   loremSlice = [ 0 11 "lorem ipsum" ];
   emipsSlice = [ 3  8 "lorem ipsum" ];
@@ -386,10 +386,11 @@ in
     };
 
     testIOIgnores = let
-      ioSlice = md.makeSlice "<!-- io -->this text is ignored<!-- /io -->";
+      ioText = "<!-- io -->this text is ignored<!-- /io -->";
+      ioSlice = md.makeSlice ioText;
       parser = md.thenSkip md.ioNode md.eof;
     in {
       expr = md.dump (parser ioSlice);
-      expected = "";
+      expected = { type="io-skip"; text=ioText; };
     };
   }

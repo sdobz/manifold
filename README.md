@@ -18,40 +18,40 @@ Markdown has a graceful path to enhancement, it is palatable in plain text and i
 
 Nix is a functional language that is designed to transform source code into software. From an operational perspective it is a DSL used to write build scripts.
 
+## Rust
+
+Rust is a general purpose programming language with a robust type system, broad platform support, mature tooling, 
+
 ## Workflow
 
 1. Write markdown files describing the programs semantics
 2. Describe the major features of the software
 3. Add implementation details to the features
-4. Run nixmd on the markdown to produce artifacts and inspect behavior
+4. Run manifold on the markdown to produce artifacts and inspect behavior
 5. Refine the implementation
 6. Package for distribution
 
 ## CLI
 
 ```bash
-$ nixmd runtime <source.md>
-Output the path to the runtime used to generate the evaluated text
+$ manifold --help
+  Output the path to the runtime used to generate the evaluated text
 
-$ nixmd evaluate <source.md>
-  Output the path to the evaluated markdown 
+$ manifold evaluate --help <source.md>
+  Build and execute a runtime for the source file and output the evaluated text
 
-nixmd diff <source.md>
+manifold diff --help <source.md>
   Output the diff between the source text and the evaluated text
 
-nixmd fix <source.md>
+manifold fix --help <source.md>
   Overwrite the source markdown with the evaluated text
 
-nixmd watch <source.md> <destination.md>
-  Whenever source.md changes evaluate and write it to destination.md
+manifold watch --help <source.md>
+  Whenever the source markdown 
 
-nixmd test
-  Run unit tests in bootstrap/*.test.nix
+manifold test
+  Run all tests
 ```
-
-### Out
-
-
 
 ### Garbage Collection
 
@@ -84,8 +84,8 @@ Available tags are:
 * `<let <binding>='"string value"' ... />` - assign a name to an expression
 
 Potential tags:
-* `<fetch <name>='https://<source>' />` - load filesystem or local data into a string
-* `<out <attr>='path/to/file.ext' />` - write final state to 
+* `<source name='' />` - Depend on an external source. Paths are referenced and protocols are respected, put in the local scope
+* `<artifact <name>='https://<source>' />` - Write to an external system
 
 ### Syntax issues
 
@@ -106,7 +106,7 @@ The source text is eventually resolved to an attribute set (dictionary / hash ma
 ```nix
 {
     out = ''evaluated text'';
-    nixmd = {}; # internal data structures
+    manifold = {}; # internal data structures
     global = {}; # Values added to each layer
 
     arbitraryKeys = "anything"; # transformations can add arbitrary data
@@ -202,7 +202,12 @@ rerun-if instructions
 1. ~~Fixed point~~
 2. ~~Organize files~~
 3. ~~CLI interface~~
-4. 
+4. Polyglot CLI implementation
+5. Readme as entrypoint
+6. Source dependency
+7. Watch trace source
+8. Artifact writing
+9. IO ref
 
 # Motivating project
 

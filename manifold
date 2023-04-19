@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+# This command is the same as provided by the flake, except it runs "local" versions of all files
+
+SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+export TRANSFORM_NIX="$(realpath "$SCRIPT_DIR/nix/transform.md.nix")"
+export RUNTIME_NIX="$(realpath "$SCRIPT_DIR/nix/runtime.nix")"
+export MANIFOLD_CLI="$(realpath "$SCRIPT_DIR/nix/manifold.cli.sh")"
+
+/usr/bin/env bash "$MANIFOLD_CLI" "$@"

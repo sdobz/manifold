@@ -1,5 +1,5 @@
 __args:
-let nixmd = rec {
+let manifold = rec {
   args = __args;
   # https://github.com/NixOS/nixpkgs/blob/master/lib/list.nix
   foldr = op: nul: list: let len = builtins.length list; fold' = n: if n == len then nul else op (builtins.elemAt list n) (fold' (n + 1)); in fold' 0;
@@ -13,7 +13,7 @@ let nixmd = rec {
   overlays = [
     (final: prev: with final.global; rec {
       out = prev.out + builtins.concatStringsSep "" [
-          "This is a more complex example demonstrating how to construct a source folder, then use a toolchain to build those files.\n\nIt highlights the out-of-order nature of literate programming and establishes some fundamental patterns of nixmd.\n\n"
+          "This is a more complex example demonstrating how to construct a source folder, then use a toolchain to build those files.\n\nIt highlights the out-of-order nature of literate programming and establishes some fundamental patterns of manifold.\n\n"
       ];
     })
 
@@ -96,4 +96,4 @@ let nixmd = rec {
   initialSelf = { out = ""; global = {}; };
   finalSelf = makeExtensible (extends extensions (self: initialSelf));
 }; in
-  nixmd.finalSelf
+  manifold.finalSelf
