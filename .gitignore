@@ -1,3 +1,4 @@
 .antlr
 .direnv
 .gcroot
+.nix.md.nix

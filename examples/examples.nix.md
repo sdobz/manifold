@@ -1,9 +1,9 @@
-#!/usr/bin/env bash
+<flake description='examples demonstrating manifold features'  />
 
-# ./build-example.sh HelloBash
-#    build one
-# ./build-example.sh
-#    build all
+
+# Examples
+
+
 
 set -e
 

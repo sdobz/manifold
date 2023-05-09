@@ -1,4 +1,4 @@
-# Using Markdown to Tell a Story in Nix
+# Storytelling
 
 Our cognition is rooted in the tradition of story telling, weaving a tale of motivation and structure
 
@@ -6,34 +6,45 @@ We are responsible for the semantics of a program, what it means and represents 
 
 Names have power, they give order to the chaos of creation, bridging the gap between our thought and communication.
 
-## Motivation
+## Naming things is hard
 
-The order that we tell a story tends to be told is different than what a computer expects. We start with genralities, they start with specifics.
+Understanding the meaning of a name in the context of code requires you to understand both what the computer is doing with it
 
-## Markdown
+## Semantic system
 
-Markdown has a graceful path to enhancement, it is palatable in plain text and is trivial to render into html. Headers, links, and embeds give us just enough to tell a structured story.
+Manifold is a parser and serializer of streams of bytes, it checks that both you and the computer agree they mean the same thing.
 
-## Nix
+## Talking to humans with Markdown
+
+Markdown has a graceful path to enhancement, it is palatable in plain text and is trivial to render into html. Headers, links, and embeds give us a story to remember
+
+## Describing dependencies with Nix
 
 Nix is a functional language that is designed to transform source code into software. From an operational perspective it is a DSL used to write build scripts.
 
-## Rust
+## Computationally effecient Rust
 
-Rust is a general purpose programming language with a robust type system, broad platform support, mature tooling, 
+Rust is a general purpose programming language with a robust type system, mature tooling, and is well suited to 
+
+### Examples
+
+## Community
+
+Since a semantic is internally complete, you can easily share them with other people and compose them together.
 
 ## Workflow
 
 1. Write markdown files describing the programs semantics
 2. Describe the major features of the software
-3. Add implementation details to the features
+3. Use parsers to agree with the computer (runtime vs 
+)
 4. Run manifold on the markdown to produce artifacts and inspect behavior
 5. Refine the implementation
 6. Package for distribution
 
 ## CLI
 
-```bash
+```bash help
 $ manifold --help
   Output the path to the runtime used to generate the evaluated text
 
@@ -51,7 +62,14 @@ manifold watch --help <source.md>
 
 manifold test
   Run all tests
+
+manifold <source.md> - --help
+Use stdin
 ```
+
+## Diff
+
+When the contents of a file don't agree 
 
 ### Garbage Collection
 
@@ -62,6 +80,8 @@ pwd
 ```
 
 # Implementation
+
+In each supported language: Parse the source text, and build a runtime binary in that language. This runtime can be fed the same source text again. If it does not match it exits with an error and emits a diff file 
 
 ## Bootstrap
 
@@ -83,9 +103,8 @@ Available tags are:
 * `<with <param>='<default expr>' ... />` - Add attributes to the global scope of every expression
 * `<let <binding>='"string value"' ... />` - assign a name to an expression
 
-Potential tags:
-* `<source name='' />` - Depend on an external source. Paths are referenced and protocols are respected, put in the local scope
-* `<artifact <name>='https://<source>' />` - Write to an external system
+Potential tags (flake based build):
+* `<flake inputs.somePackage.url='...' outputs.${system}.packages.asdf='...' />` - Use nix flake to do a thing
 
 ### Syntax issues
 
@@ -154,6 +173,9 @@ source code runtime
 
 A sufficiecntly lucid explanation of your programs behavior can be interpreted as the program itself
 
+A fixed point is where the future and the past agree, where the evaluation is what you expect and the result is deterministic
+
+Build your program like a proof, with deductive reasoning and arbitrary order
 
 # Terms
 
@@ -196,18 +218,24 @@ rerun-if instructions
 * [Parsec style parser for markdown](https://github.com/tiqwab/md-parser)
 * [rust webassembly what it's all about](https://sdfgeoff.github.io/wasm_minigames/what_its_all_about.html)
 * [fall-from-grace demo language](https://github.com/Gabriella439/grace)
+* [scripting with nix](http://www.chriswarbo.net/projects/nixos/scripting_with_nix.html)
 
 ## TODO
 
 1. ~~Fixed point~~
 2. ~~Organize files~~
 3. ~~CLI interface~~
-4. Polyglot CLI implementation
+4. 
 5. Readme as entrypoint
-6. Source dependency
-7. Watch trace source
-8. Artifact writing
-9. IO ref
+6. Polyglot cli
+
+Head dump:
+md.nix, when imported, turns into a flake
+The default app of this flake can parse markdown into a flake
+Which attempts to fix the markdown
+
+md.nix - a nix script that can interpret markdown into a flake
+nix-md - a bin produced by that flake that can interpret markdown
 
 # Motivating project
 

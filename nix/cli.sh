@@ -1,11 +1,11 @@
 set -o pipefail
 
-if [ -z "${TRANSFORM_NIX+xxx}" ] || [ -z "${RUNTIME_NIX+xxx}" ] || [ -z "${MANIFOLD_CLI+xxx}" ]; then
-    echo "TRANSFORM_NIX, RUNTIME_NIX, MANIFOLD_CLI must be set to absolute paths to those files" >&2
+if [ -z "${MD_NIX+xxx}" ] || [ -z "${CLI_SH+xxx}" ]; then
+    echo "MD_NIX, CLI_SH must be set to absolute paths to those files" >&2
     exit 1
 fi
 
-sub_runtime() { # <source.md>      - Print path to nix runtime
+sub_build() { # <source.md>      - Create a nix derivation that defines a flake for the runtime
     local sourceText="$(realpath "$1")"
     shift
     local runtimeName="$(basename "$sourceText").nix"
@@ -13,7 +13,7 @@ sub_runtime() { # <source.md>      - Print path to nix runtime
         --impure \
         --no-out-link \
         --expr "\
-            let md = import \"$TRANSFORM_NIX\"; \
+            let md = import \"$MD_NIX\"; \
                 pkgs = import <nixpkgs> {}; in \
             pkgs.writeText \"$runtimeName\" (md.dumpRuntime \"$RUNTIME_NIX\" \"$sourceText\")" \
             "$@"
@@ -28,7 +28,7 @@ sub_evaluate() { # <source.md>    - Print path to evaluated nix
         --impure \
         --no-out-link \
         --expr "\
-            let md = import \"$TRANSFORM_NIX\"; \
+            let md = import \"$MD_NIX\"; \
                 pkgs = import <nixpkgs> {}; \
                 runtimeNix = pkgs.writeText \"$runtimeName\" (md.dumpRuntime \"$RUNTIME_NIX\" \"$sourceText\"); in \
             pkgs.writeText \"$evaluationName\" (import runtimeNix {}).out" \
@@ -67,7 +67,7 @@ sub_eval-nix() { # "expr"         - Import markdown and run command
     shift
     nix eval \
         --impure \
-        --expr "with import \"$TRANSFORM_NIX\"; $cmd" \
+        --expr "with import \"$MD_NIX\"; $cmd" \
         "$@"
 }
 
@@ -77,28 +77,34 @@ sub_ast() { # <source.md>         - Dump the AST for this markdown file
 }
 
 sub_cloc() { #                    - Dump how many lines of code in bootstrap files
-    cloc "$MANIFOLD_CLI" "$TRANSFORM_NIX" "$RUNTIME_NIX"
+    cloc "$CLI_SH" "$MD_NIX" "$RUNTIME_NIX"
 }
+
 
 sub_help() { #                    - Output subcommands
     echo "Usage: nixmd <subcommand> [options]"
     echo "Subcommands:"
-    grep "^sub_" "$MANIFOLD_CLI" | sed 's/sub_\([a-z\-]*\).*#\(.*\)/  \1\2/g'
+    grep "^sub_" "$CLI_SH" | sed 's/sub_\([a-z\-]*\).*#\(.*\)/  \1\2/g'
     echo ""
 }
 
-subcommand="${1:-}"
-case $subcommand in
-    "" | "-h" | "--help")
-        sub_help
-        ;;
-    *)
-        shift
-        sub_${subcommand} $@
-        if [ $? = 127 ]; then
-            echo "Error: '$subcommand' is not a known subcommand." >&2
-            echo "       Run 'nixmd help' for a list of known subcommands." >&2
-            exit 1
-        fi
-        ;;
-esac
+consume_subcommand() {
+    subcommand="${1:-}"
+    shift
+    case $subcommand in
+        "" | "-h" | "--help")
+            sub_help
+            ;;
+        *)
+            shift
+            sub_${subcommand} "$@"
+            if [ $? = 127 ]; then
+                echo "Error: '$subcommand' is not a known subcommand." >&2
+                echo "       Run 'nixmd help' for a list of known subcommands." >&2
+                exit 1
+            fi
+            ;;
+    esac
+}
+
+consume_subcommand "$@"

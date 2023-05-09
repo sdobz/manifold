@@ -1,59 +1,90 @@
+#!/usr/bin/env nix-shell
+#! nix-shell -I nixpkgs=md.nix --no-substitute
+#! nix-shell --pure -i md_nix
+
 /*
-File ghoul: bootstrap a literate programming environment
-
-The "real" file will be written in a general purpose systems programming language
-(such as rust)
-* speed is a goal
-* better complexity management
-* availability of libraries
-
-This should be constructed in itself
-
-To get there we have to implement a subset of the language to detangle the readme
-(which implements the real environment)
-
-soft requirment:
-  - match rust `nom` so they can share combinators
-
-parser = arguments -> slice -> result
-
-result = [ slice value ] | [ slice null err ]
-elemAt result 0 = slice
-elemAt result 1 = value
-elemAt result 2 = err
-
-slice = [ offset length text ]
-elemAt slice 0 == offset
-elemAt slice 1 == length
-elemAt slice 2 == text
-
-err = _ -> string
-Can be invoked with null to resolve
-Can be composed to represent a stack trace
-
+Transform markdown into nix that can transform into the markdown
 */
- 
-with builtins;
-with {
-  traceID = id: trace id id;
-};
-rec {
+
+let prev = rec {
+  text = '''';
+/*
+elemAt result 0 = src<T>
+elemAt result 1 = value<V>
+elemAt result 2 = ctx<T>
+elemAt result 3 = err
+*/
+
+/*
+elemAt ast 0 == offset
+elemAt ast 1 == length
+elemAt ast 2 == text
+
+How to "query"? Run parser on AST? Results? GC?
+
+md = src<text>
+srcMd = [ name|null parent|null children|null ]
+
+Parsers run on linear sequences of symbols
+hypothesis: AST is a graph, must be "linearized"?
+
+"Pointer" to a node, stack
+
+next = ctx: if child[0] else next parent
+
+(type system is hidden behind the type of ctx,
+how do we know what value is? - it ran through a parser)
+parser name must be unique
+attrs on a set.......
+yea hashmap
+
+{
+  <name> = md: final: prev: {
+<code body>
+  };
+}
+
+runtime:
+define self, extend with args, evaluate
+
+withinName = srcAst: name: parseAst:
+= [ ast "" ]
+
+opt -> match
+transform = ast: match (notText ++ [ text ])
+= [ ast "match" [ ast  ] ]
+
+Final "result" value is a flake
+parseMd = ast: thenSkip (many transforms) eof
+= [ ast "md" transformArr ]
+
+final = {src: meta: flake: md:}
+*/
+prelude = rec {
   ##########
-  # slices #
+  # nodeps #
   ##########
-  
- /*
-  a slice is an array containing [ offset length text ]
-  */
-  makeSlice = text: [ 0 (stringLength text) text ];
-  
-  /*
-  return the text that a slice represents
-  */
-  dumpSlice = slice: substring (elemAt slice 0) (elemAt slice 1) (elemAt slice 2);
+
+  inherit (builtins) elemAt substring length stringLength match head tail transforms concatStringsSep replaceStrings filter;
+
+  ###############
+  # text parser #
+  ###############
 
   /*
-  return the first n characters of a slice in a string
+    an md is an array containing [ parents|null child[] src ]
+    a src is an array containing [ name offset length text ]
+  */
+  makeTextMd = text: let src = [ 0 (stringLength text) text ];
+    in [ null [] src ];
+
+  /*
+    return the text that a slice represents
+  */
+  dumpMd = slice: substring (elemAt slice 0) (elemAt slice 1) (elemAt slice 2);
+
+  /*
+    return the first n characters of a slice in a string
   */
   peekN = n: slice:
     let
@@ -62,13 +93,13 @@ rec {
       substring offset n (elemAt slice 2);
 
   /*
-  return a slice removing the first n characters
+    return a slice removing the first n characters
   */
   dropN = n: slice:
     [ ((elemAt slice 0) + n) ((elemAt slice 1) - n) (elemAt slice 2) ];
  
   /*
-  format offset and length for errors
+    format offset and length for errors
   */
   loc = slice: "[${toString (elemAt slice 0)}:${toString (elemAt slice 1)}]";
 
@@ -76,25 +107,24 @@ rec {
   # failure #
   ###########
 
-
   /*
-  construct a contextual error
+    construct a contextual error
   */
   fail = name: msg: slice: [ slice null (_: "${name}${loc slice} - ${msg}") ];
 
   /*
-  failWith adds an err to the end of the err
+    add an err to the end of the err
   */
   failWith = result: name: msg: slice:
     [ slice null (_: "${(elemAt result 2) null}\n${name}${loc slice} - ${msg}") ];
 
   /*
-  check if the err param is present
+    failed - check if the err param is present
   */
   failed = result: length result == 3;
 
   /*
-  dump the result if success or error if failure
+    dump - print the result if success or error if failure
   */
   dump = result:
     if failed result
@@ -108,7 +138,7 @@ rec {
   ###########
 
   /*
-  consume the symbols if matched
+    tag - consume the symbols if matched
   */
   tag = k: slice:
     let tokenLength = stringLength k; in
@@ -124,13 +154,13 @@ rec {
     [ (dropN tokenLength slice) k ];
   
   /*
-  pure - consume nothing and return this value
+    pure - consume nothing and return this value
   */
   pure = value: slice:
     [ slice value ];
 
   /*
-  fmap - call the function with the value the parser produced
+    fmap - call the function with the value the parser produced
   */
   fmap = f: parser: slice:
     let result = parser slice; in
@@ -145,7 +175,7 @@ rec {
     [ remainder (f value) ];
   
   /*
-  takeWhile - consume characters until the test fails
+    takeWhile - consume characters until the test fails
   */
   takeWhile = testSlice: slice:
     let
@@ -163,13 +193,13 @@ rec {
     [ (dropN foundOffset slice) (substring offset foundOffset text) ];
 
   /*
-  takeUntil - consume characters until the parser succeeds
+    takeUntil - consume characters until the parser succeeds
   */
   takeUntil = parseUntil:
     takeWhile (searchSlice: failed (parseUntil searchSlice));
   
   /*
-  takeRegex - consume characters until the regex does not match
+    takeRegex - consume characters until the regex does not match
   */
   takeRegex = regex:
     takeWhile (searchSlice: match regex (peekN 1 searchSlice) != null);
@@ -317,7 +347,7 @@ rec {
   attribute
     take something that can resonably be an attribute
   */
-  attribute = lexeme (mustConsume (takeRegex "[a-zA-Z0-9_]"));
+  attribute = lexeme (mustConsume (takeRegex "[a-zA-Z0-9_\\.\\-]"));
 
   /*
   store in set
@@ -358,6 +388,10 @@ rec {
   */
   combine = parsers: mapReduce [] (root: value: root ++ [value]) parsers;
 
+  #######
+  # AST #
+  #######
+
   # code fence with id
 
   codeFence = tag "```";
@@ -372,10 +406,6 @@ rec {
 
   htmlTagOpen = tag "<";
   # allowed tag types
-  htmlTagWith = tag "with";
-  htmlTagLet = tag "let";
-  htmlTagIO = tag "io";
-  htmlTagType = opt [ htmlTagWith htmlTagLet htmlTagIO ];
   # { token = ".." }
   storeHtmlTagType = lexeme (storeAttribute "type" htmlTagType);
   # `attr=` => {name="attr";}
@@ -391,6 +421,12 @@ rec {
   # { attributes = [ .. ] }
   storeHtmlTagAttrs = combineAttributes [ storeHtmlTagType storeHtmlTagAttributes ];
   htmlTagClose = tag "/>";
+  
+  htmlTagWith = tag "with";
+  htmlTagLet = tag "let";
+  htmlTagIO = tag "io";
+  htmlTagFlake = tag "flake";
+  htmlTagType = opt [ htmlTagWith htmlTagLet htmlTagIO htmlTagFlake ];
 
   htmlTagNode = annotateText (between htmlTagOpen htmlTagClose storeHtmlTagAttrs);
 
@@ -407,30 +443,12 @@ rec {
   storePlainText = storeAttribute "text" plainText;
   plainTextNode = combineAttributes [ storePlainText storePlainTextType ];
 
-  # language syntax
-
-  nodes = opt [
-    plainTextNode
-    htmlTagNode
-    codeNode
-    ioNode
-  ];
 
   parseNixmd = thenSkip (many nodes) eof;
 
   ###########
   # runtime #
   ###########
-
-  dumpAst = filename: let
-    contents = readFile filename;
-    result = parseNixmd (makeSlice contents);
-  in
-    if failed result
-      then dump result
-    else
-      let ast = elemAt result 1; in
-      ast;
 
   escape = replaceStrings [ "\n" "\r" "\t" "\\" "\"" "\${" ] [ "\\n" "\\r" "\\t" "\\\\" "\\\"" "\\\${" ];
   quoteNodeText = node: "\"${escape node.text}\"";
@@ -460,16 +478,25 @@ rec {
         overlay [] ([ (quoteNodeText node) "\"<!-- io -->\"" ] ++ printStrings ++ printlnStrings ++ [ "\"<!-- /io -->\"" ]);
     "io-skip" = node: "";
     "code" = node: overlay [ "${node.id} = \"${escape node.code}\";" ] [ (quoteNodeText node) ];
-    "text" = node: overlay [] [ (quoteNodeText node) ];
+    # "text" = node: overlay [] [ (quoteNodeText node) ];
+    "flake" = node: overlay [] [];
   };
+
+  # language syntax
+
+  nodes = opt [
+    plainTextNode
+    htmlTagNode
+    codeNode
+    ioNode
+  ];
+
 
   nodeOverlays = ast: map (node: (nodeOverlay.${node.type} node)) ast;
 
-  nixmdRuntime = runtime: ast:
-    replaceStrings
-      [ "/* overlays */" ]
-      [ ( concatStringsSep "\n" (nodeOverlays ast) ) ]
-      runtime;
+  #######
+  # Fix #
+  #######
 
   dumpRuntime = runtimePath: filename: let
     contents = readFile filename;
@@ -482,4 +509,13 @@ rec {
     let ast = elemAt result 1; in
     
     nixmdRuntime (readFile runtimePath) ast;
-}
+
+  nixmdRuntime = runtime: ast:
+    replaceStrings
+      [ "/* overlays */" ]
+      [ ( concatStringsSep "\n" (nodeOverlays ast) ) ]
+      runtime;
+
+  traceID = id: trace id id;
+}; }; 
+in prev

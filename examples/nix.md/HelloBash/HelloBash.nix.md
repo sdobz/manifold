@@ -1,7 +1,7 @@
 This example shows how to capture the stdout of a bash script
 
 
-First define the shell script:
+First define the shell script
 
 ```bash
 hello
@@ -9,10 +9,11 @@ hello
 
 Then define a nix derivation that runs the shell script
 
-<with
-    pkgs='import <nixpkgs> {}'
-    code='code: "```\n${code}\n```"'
-/>
+```nix
+ctx: final: prev: {
+    pkgs=import <nixpkgs> {};
+}
+```
 
 <let demoScript='pkgs.writeShellApplication {
     name="demoScript";

@@ -3,7 +3,7 @@ let
   inherit (pkgs) lib;
   inherit (lib) runTests;
   inherit (builtins) readFile;
-  md = import ./transform.md.nix;
+  md = import ./md.nix;
 
   loremSlice = [ 0 11 "lorem ipsum" ];
   emipsSlice = [ 3  8 "lorem ipsum" ];
@@ -279,6 +279,11 @@ in
     testAttribute = {
       expr = md.dump (md.attribute loremSlice);
       expected = "lorem";
+    };
+
+    testAttributeOddChars = {
+      expr = md.dump (md.attribute (md.makeSlice "aB3.-"));
+      expected = "aB3.-";
     };
 
     testStoreAttribute = {

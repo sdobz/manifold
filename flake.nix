@@ -10,7 +10,7 @@
 
       packages = forAllSystems (system: let
         pkgs = self.legacyPackages."${system}";
-        transform_nix = ./nix/transform.md.nix;
+        semantic_nix = ./nix/semantic.md.nix;
         runtime_nix = ./nix/runtime.nix;
         manifold_cli = ./nix/manifold.cli.sh;
         runtimeInputs = [ pkgs.nix ];
@@ -20,7 +20,7 @@
           #!${pkgs.runtimeShell}
 
           export PATH="${pkgs.lib.makeBinPath runtimeInputs}:$PATH"
-          export TRANSFORM_NIX="${transform_nix}"
+          export SEMANTIC_NIX="${semantic_nix}"
           export RUNTIME_NIX="${runtime_nix}"
           export MANIFOLD_CLI="${manifold_cli}"
 
