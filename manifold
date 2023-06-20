@@ -7,4 +7,4 @@ export SEMANTIC_NIX="$(realpath "$SCRIPT_DIR/nix/transform.md.nix")"
 export RUNTIME_NIX="$(realpath "$SCRIPT_DIR/nix/runtime.nix")"
 export MANIFOLD_CLI="$(realpath "$SCRIPT_DIR/nix/manifold.cli.sh")"
 
-/usr/bin/env bash "$MANIFOLD_CLI" "$@"
+bash "$MANIFOLD_CLI" "$@"

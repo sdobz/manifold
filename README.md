@@ -87,6 +87,8 @@ In each supported language: Parse the source text, and build a runtime binary in
 
 Implement a version in pure nix, enough to prove the concept. It should fit into a single file less than 500 lines.
 
+
+
 ## Parser / Testing
 
 Use unit tests to construct the parser
@@ -219,6 +221,7 @@ rerun-if instructions
 * [rust webassembly what it's all about](https://sdfgeoff.github.io/wasm_minigames/what_its_all_about.html)
 * [fall-from-grace demo language](https://github.com/Gabriella439/grace)
 * [scripting with nix](http://www.chriswarbo.net/projects/nixos/scripting_with_nix.html)
+* [error context in rust](https://udoprog.github.io/rust/2023-05-22/abductive-diagnostics-for-musli.html)
 
 ## TODO
 
@@ -254,3 +257,7 @@ use it to build cad models
 based on sdf surfaces
 
 and derive gcode from it
+
+## FEATURES.nix.md
+
+Runs tests, add/remove checkmarks with matching names

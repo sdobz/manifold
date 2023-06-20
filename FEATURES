@@ -1,0 +1,32 @@
+- [ ] flake lock nix.md
+- [ ] nix.md.nix.md.nix (quine)
+- [ ] parse markdown into a "result" - series of nix commands that result in a repl sequence
+- [ ] html tags are "macros", preprocessor directive
+- [ ] each directive recieves:
+  - [ ] attrs - html k->[v] (with)
+  - [ ] final - fixed point
+  - [ ] prev - iteration
+  - [ ] parser - handle on the current document
+  - [ ] rem - result of remaining slice
+- [ ] each directive returns:
+  - [ ] string - more md (parsed)
+  - [ ] rem - substitute current parser
+  - [ ] flake - nix derivation that is the flake
+- [ ] `<nix />`
+  - [ ] `eval=`
+  - [ ] `print=`
+- [ ] `<import />`
+  - [ ] `local=`
+  - [ ] `url=`
+
+- [ ] `nix.md`
+  - [ ] `lock` - emit a nix file on stdout that, when eval, produces itself
+  - [ ] `fix` - update a markdown file
+  - [ ] `watch` - update a markdown in realtime
+
+- [ ] 
+- [ ] and "query" and s
+  - [ ] "hover" expands it
+- [ ] run through eval, (' forces eval, " tries both)
+- [ ] return string -> append text
+- [ ] return ast -> append ast

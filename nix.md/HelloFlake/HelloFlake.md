@@ -8,4 +8,8 @@ Each `.nix.md` file defines a single flake. The `<flake />` tag allows the user 
 
 ## Multi step
 
+
+
+```
 <flake inputs.hello='./input.txt' />
+```
