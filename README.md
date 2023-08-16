@@ -8,11 +8,19 @@ Names have power, they give order to the chaos of creation, bridging the gap bet
 
 ## Naming things is hard
 
-Understanding the meaning of a name in the context of code requires you to understand both what the computer is doing with it
+Understanding a line of code requires that you understand both what the programmer intends it to do, and what the computer actually does with it
 
 ## Semantic system
 
-Manifold is a parser and serializer of streams of bytes, it checks that both you and the computer agree they mean the same thing.
+Manifold attachs a semantic to specific parts of human readable text, typically described in the form of an interactive code session a la `notebooks`.
+
+Manifold can then synchronize these semantics with  
+
+## Natural Language
+
+>   "A programmer who cannot explain their ideas clearly in natural
+>    language is incapable of writing readable code." -- Tim Daly
+
 
 ## Talking to humans with Markdown
 
@@ -44,9 +52,12 @@ Since a semantic is internally complete, you can easily share them with other pe
 
 ## CLI
 
-```bash help
-$ manifold --help
-  Output the path to the runtime used to generate the evaluated text
+```bash
+$ manifold help
+  Print this text
+
+$ manifold test
+
 
 $ manifold evaluate --help <source.md>
   Build and execute a runtime for the source file and output the evaluated text
@@ -81,7 +92,21 @@ pwd
 
 # Implementation
 
-In each supported language: Parse the source text, and build a runtime binary in that language. This runtime can be fed the same source text again. If it does not match it exits with an error and emits a diff file 
+In each supported language: Parse the source text, and build a runtime binary in that language. This runtime can be fed the same source text again. If it does not match it exits with an error and emits a diff file
+
+## UX
+
+Type checks are done by line. Lines are covered in states:
+* Parsed character by character
+* Undo tracked - history color (bloom filter)
+* Deterministic when running isolated, allow cumulative diffing for language editor? Deterministic after save
+
+* Async actions collected and reduced
+* Execute async actions with a debounce
+* Find the most recently changed line, start there
+* Match text since last ran, replace
+
+* If something fails a type check highlight it red
 
 ## Bootstrap
 
@@ -126,12 +151,14 @@ The source text is eventually resolved to an attribute set (dictionary / hash ma
 
 ```nix
 {
+    src = ''source text'';
     out = ''evaluated text'';
+    ast = {}; # abstract syntax tree for the src text
     manifold = {}; # internal data structures
-    global = {}; # Values added to each layer
+    global = {}; # Global state
+    
+    # prelude - 
 
-    arbitraryKeys = "anything"; # transformations can add arbitrary data
-    codeBlockIds = "contents of code block"; # Code blocks are added
 }
 ```
 
@@ -143,6 +170,12 @@ final: prev: {
     # prev represents the state immediately before this layer runs
 }
 ```
+
+## Introspection
+
+A slice is part of a stream of bytes. Each slice has metadata describing where it came from. Slices should be (??? able to be recreated from the serialization of this metadata)
+
+As a result of recognizing the stream of bytes side effects can occur.
 
 # Theory
 
@@ -178,6 +211,14 @@ A sufficiecntly lucid explanation of your programs behavior can be interpreted a
 A fixed point is where the future and the past agree, where the evaluation is what you expect and the result is deterministic
 
 Build your program like a proof, with deductive reasoning and arbitrary order
+
+- Me
+
+## Type and Effect system
+
+A functional perspective on this code is that it describes types in terms of streams of bytes, 
+
+https://en.wikipedia.org/wiki/Effect_system
 
 # Terms
 
@@ -222,13 +263,13 @@ rerun-if instructions
 * [fall-from-grace demo language](https://github.com/Gabriella439/grace)
 * [scripting with nix](http://www.chriswarbo.net/projects/nixos/scripting_with_nix.html)
 * [error context in rust](https://udoprog.github.io/rust/2023-05-22/abductive-diagnostics-for-musli.html)
+* [parse, don't validate](https://lexi-lambda.github.io/blog/2019/11/05/parse-don-t-validate/)
 
 ## TODO
 
 1. ~~Fixed point~~
 2. ~~Organize files~~
 3. ~~CLI interface~~
-4. 
 5. Readme as entrypoint
 6. Polyglot cli
 
@@ -241,6 +282,12 @@ md.nix - a nix script that can interpret markdown into a flake
 nix-md - a bin produced by that flake that can interpret markdown
 
 # Motivating project
+
+## Bash slideshow
+
+Use markdown slideshow ecosystem (marp) to produce bash tutorials
+
+## Rust 3d prototype environment
 
 A rust debugger
 
@@ -258,6 +305,31 @@ based on sdf surfaces
 
 and derive gcode from it
 
+## Web scraping
+
+Write parsers for each website, use fixed point for when scraping happens etc
+
+## Table of contents
+
+## Autocomplete
+
+## Rhythmic Video Editing
+
+Define "important point" in each shot
+Specify a bpm, trim shots to the beat
+
+Semantically identify the important thing
+
+## Patterns in languages
+
+* Create parsers that can recognize cases of patterns
+* Describe pattern in a doc, then list instances of it
+* Jr programmer: add this thing
+
 ## FEATURES.nix.md
 
-Runs tests, add/remove checkmarks with matching names
+Runs tests, add/remove checkmarks with matching nameso
+
+## ideas
+
+"vendor" tag that takes a url and sends it to 

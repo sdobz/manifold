@@ -10,9 +10,8 @@
 
       packages = forAllSystems (system: let
         pkgs = self.legacyPackages."${system}";
-        semantic_nix = ./nix/semantic.md.nix;
-        runtime_nix = ./nix/runtime.nix;
-        manifold_cli = ./nix/manifold.cli.sh;
+        md_nix = ./nix.md/md.nix;
+        cli_sh = ./nix.md/cli.sh;
         runtimeInputs = [ pkgs.nix ];
       in rec {
         manifold = pkgs.writeScriptBin "manifold"
@@ -20,11 +19,10 @@
           #!${pkgs.runtimeShell}
 
           export PATH="${pkgs.lib.makeBinPath runtimeInputs}:$PATH"
-          export SEMANTIC_NIX="${semantic_nix}"
-          export RUNTIME_NIX="${runtime_nix}"
-          export MANIFOLD_CLI="${manifold_cli}"
+          export MD_NIX="${md_nix}"
+          export CLI_SH="${cli_sh}"
 
-          ${pkgs.runtimeShell} "$MANIFOLD_CLI" "$@"
+          ${pkgs.runtimeShell} "$CLI_SH" "$@"
           '';
         manifold-all = pkgs.linkFarmFromDrvs  "manifold-all" [ manifold ];
       });

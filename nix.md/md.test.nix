@@ -5,6 +5,9 @@ let
   inherit (builtins) readFile;
   md = import ./md.nix;
 
+  # document data structures
+  test_ctx = { type = "constant"; };
+  
   loremSlice = [ 0 11 "lorem ipsum" ];
   emipsSlice = [ 3  8 "lorem ipsum" ];
 

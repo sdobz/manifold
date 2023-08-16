@@ -3,8 +3,7 @@
 # This command is the same as provided by the flake, except it runs "local" versions of all files
 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
-export SEMANTIC_NIX="$(realpath "$SCRIPT_DIR/nix/transform.md.nix")"
-export RUNTIME_NIX="$(realpath "$SCRIPT_DIR/nix/runtime.nix")"
-export MANIFOLD_CLI="$(realpath "$SCRIPT_DIR/nix/manifold.cli.sh")"
+export MD_NIX="$(realpath "$SCRIPT_DIR/nix.md/md.nix")"
+export CLI_SH="$(realpath "$SCRIPT_DIR/nix.md/cli.sh")"
 
-bash "$MANIFOLD_CLI" "$@"
+bash "$CLI_SH" "$@"

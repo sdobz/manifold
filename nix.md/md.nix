@@ -11,8 +11,7 @@ let prev = rec {
 /*
 elemAt result 0 = src<T>
 elemAt result 1 = value<V>
-elemAt result 2 = ctx<T>
-elemAt result 3 = err
+elemAt result 2 = ctx[]
 */
 
 /*
